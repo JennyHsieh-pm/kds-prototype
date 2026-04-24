@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KDS 優化版 Prototype v1.0</title>
+  <style>
+    :root {
+      --bg-primary: #111827;
+      --bg-secondary: #1f2937;
+      --bg-card: #1e293b;
+      --bg-card2: #243447;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --blue: #3b82f6;
+      --blue-dim: rgba(59,130,246,0.15);
+      --green: #22c55e;
+      --green-dim: rgba(34,197,94,0.15);
+      --orange: #f97316;
+      --orange-dim: rgba(249,115,22,0.15);
+      --red: #ef4444;
+      --red-dim: rgba(239,68,68,0.15);
+      --yellow: #eab308;
+      --yellow-dim: rgba(234,179,8,0.15);
+      --purple: #a855f7;
+      --border: rgba(255,255,255,0.07);
+      --dine: #3b82f6;
+      --take: #22c55e;
+      --dlvr: #f97316;
+      --ue: #ef4444;
+      --fp: #eab308;
+      --radius: 10px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: -apple-system, 'PingFang TC', 'Noto Sans TC', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* ── NAV ─────────────────────────────── */
+    #navBar {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+    .nav-logo { font-size: 16px; font-weight: 800; color: var(--blue); letter-spacing: -0.3px; margin-right: 4px; white-space: nowrap; }
+    .nav-tabs { display: flex; gap: 3px; flex: 1; }
+    .nav-tab {
+      padding: 6px 16px; border-radius: 7px; border: none; cursor: pointer;
+      font-size: 13px; font-weight: 600; background: transparent;
+      color: var(--text-secondary); transition: all .18s;
+    }
+    .nav-tab.active { background: var(--blue); color: #fff; }
+    .nav-tab:hover:not(.active) { background: rgba(255,255,255,.07); color: var(--text-primary); }
+    .voice-wrap {
+      display: flex; align-items: center; gap: 7px;
+      padding: 5px 12px; border-radius: 20px;
+      background: rgba(255,255,255,.04); border: 1px solid var(--border);
+      transition: border-color .2s;
+    }
+    .voice-wrap.on { border-color: rgba(59,130,246,.5); background: var(--blue-dim); }
+    .voice-label { font-size: 12px; color: var(--text-secondary); }
+    .voice-wrap.on .voice-label { color: var(--blue); }
+    .toggle { position: relative; width: 40px; height: 22px; cursor: pointer; }
+    .toggle input { display: none; }
+    .tog-slider {
+      position: absolute; inset: 0; background: #374151; border-radius: 22px; transition: .25s;
+    }
+    .tog-slider::after {
+      content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%;
+      background: #fff; top: 3px; left: 3px; transition: .25s;
+    }
+    input:checked + .tog-slider { background: var(--blue); }
+    input:checked + .tog-slider::after { transform: translateX(18px); }
+    .voice-mic { font-size: 14px; }
+
+    /* ── VIEWS ─────────────────────────────── */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .view { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+    .view.active { display: flex; }
+
+    /* ── FILTER BAR ─────────────────────────── */
+    .filter-bar {
+      background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+      padding: 8px 20px; display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+    }
+    .filter-label { font-size: 11px; color: var(--text-muted); margin-right: 2px; }
+    .fbtn {
+      padding: 4px 12px; border-radius: 14px; border: 1.5px solid transparent;
+      font-size: 12px; font-weight: 600; cursor: pointer; background: rgba(255,255,255,.05);
+      color: var(--text-secondary); transition: all .15s;
+    }
+    .fbtn[data-f="dine-in"] { color: var(--dine); }
+    .fbtn[data-f="dine-in"].on { border-color: var(--dine); background: rgba(59,130,246,.12); }
+    .fbtn[data-f="takeout"] { color: var(--take); }
+    .fbtn[data-f="takeout"].on { border-color: var(--take); background: rgba(34,197,94,.12); }
+    .fbtn[data-f="delivery"] { color: var(--dlvr); }
+    .fbtn[data-f="delivery"].on { border-color: var(--dlvr); background: rgba(249,115,22,.12); }
+    .fbtn[data-f="ue"] { color: var(--ue); }
+    .fbtn[data-f="ue"].on { border-color: var(--ue); background: var(--red-dim); }
+    .fbtn[data-f="fp"] { color: var(--fp); }
+    .fbtn[data-f="fp"].on { border-color: var(--fp); background: var(--yellow-dim); }
+    .filter-count { margin-left: auto; font-size: 12px; color: var(--text-muted); }
+
+    /* ── VOICE PANEL ─────────────────────────── */
+    .voice-panel {
+      background: var(--blue-dim); border-bottom: 1px solid rgba(59,130,246,.25);
+      padding: 8px 20px; display: none; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    .voice-panel.show { display: flex; }
+    .vp-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--blue); white-space: nowrap; }
+    .vp-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); animation: blink 1.2s infinite; }
+    @keyframes blink { 0%,100% { opacity:1 } 50% { opacity:.25 } }
+    .vp-cmds { display: flex; gap: 5px; flex-wrap: wrap; flex: 1; }
+    .vcmd {
+      padding: 3px 10px; background: rgba(59,130,246,.15); border: 1px solid rgba(59,130,246,.35);
+      border-radius: 10px; color: var(--blue); font-size: 12px; cursor: pointer; transition: all .15s;
+    }
+    .vcmd:hover { background: rgba(59,130,246,.3); }
+    .vcmd:active { transform: scale(.95); }
+    .vp-hint { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+
+    /* ── ORDER GRID ─────────────────────────── */
+    .orders-area {
+      flex: 1; overflow-y: auto; padding: 14px;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; align-content: start;
+    }
+    .order-card {
+      background: var(--bg-card); border-radius: var(--radius); overflow: hidden;
+      display: flex; flex-direction: column; border: 2px solid transparent;
+      position: relative; transition: all .25s; min-height: 180px;
+    }
+    .order-card::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    }
+    .order-card[data-status="making"]::before { background: var(--blue); }
+    .order-card[data-status="ready"]::before { background: var(--green); }
+    .order-card[data-status="served"]::before { background: var(--text-muted); opacity: .5; }
+    .order-card.all-ready {
+      border-color: var(--green);
+      box-shadow: 0 0 14px rgba(34,197,94,.25);
+    }
+    .order-card.delay-warn { box-shadow: 0 0 10px rgba(234,179,8,.3); }
+    .order-card.delay-alert { box-shadow: 0 0 12px rgba(249,115,22,.4); }
+    .order-card.delay-urgent { border-color: var(--red); box-shadow: 0 0 14px rgba(239,68,68,.5); animation: urgpulse 1s infinite; }
+    @keyframes urgpulse { 0%,100%{box-shadow:0 0 14px rgba(239,68,68,.5)} 50%{box-shadow:0 0 22px rgba(239,68,68,.8)} }
+
+    .card-head { padding: 9px 10px 7px 14px; display: flex; align-items: center; gap: 7px; }
+    .svc-badge {
+      padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 800; letter-spacing: .4px; flex-shrink: 0;
+    }
+    .svc-badge.dine-in { background: var(--dine); color: #fff; }
+    .svc-badge.takeout { background: var(--take); color: #fff; }
+    .svc-badge.delivery { background: var(--dlvr); color: #fff; }
+    .svc-badge.ue { background: var(--ue); color: #fff; }
+    .svc-badge.fp { background: var(--fp); color: #111; }
+    .order-num { font-size: 17px; font-weight: 800; flex: 1; }
+    .order-time { font-size: 11px; color: var(--text-secondary); }
+    .order-prog {
+      font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 8px;
+      background: rgba(255,255,255,.07);
+    }
+    .order-prog.done-all { background: var(--green-dim); color: var(--green); }
+
+    .card-meta { padding: 0 10px 5px 14px; font-size: 11px; color: var(--text-muted); display: flex; gap: 10px; }
+
+    .items-list { padding: 0 10px 6px 14px; flex: 1; }
+    .item-row {
+      display: flex; align-items: center; gap: 7px; padding: 5px 4px;
+      border-bottom: 1px solid var(--border); cursor: pointer;
+      border-radius: 4px; transition: background .12s; user-select: none;
+    }
+    .item-row:last-child { border-bottom: none; }
+    .item-row:hover { background: rgba(255,255,255,.04); }
+    .item-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; transition: all .2s; }
+    .item-dot.todo { background: transparent; border: 2px solid var(--text-muted); }
+    .item-dot.doing { background: #475569; border: 2px solid #94a3b8; }
+    .item-dot.done { background: var(--green); border: 2px solid var(--green); }
+    .item-name { font-size: 12px; flex: 1; }
+    .item-name.done { text-decoration: line-through; color: var(--text-muted); }
+    .item-attr { font-size: 10px; color: var(--text-muted); }
+    .item-note { font-size: 10px; color: var(--orange); }
+    .item-urge { font-size: 9px; padding: 1px 4px; background: var(--red); border-radius: 3px; font-weight: 800; }
+    .item-menu-btn {
+      width: 20px; height: 20px; border-radius: 4px; border: none; background: transparent;
+      color: var(--text-muted); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity .1s;
+    }
+    .item-row:hover .item-menu-btn { opacity: 1; }
+    .item-menu-btn:hover { background: rgba(255,255,255,.08); color: var(--text-primary); }
+
+    .card-note { padding: 2px 10px 6px 14px; font-size: 11px; color: var(--orange); line-height: 1.4; }
+
+    .card-action {
+      margin: 6px 10px; padding: 9px 12px; border-radius: 8px; border: none; cursor: pointer;
+      font-size: 13px; font-weight: 700; transition: all .18s; text-align: center;
+    }
+    .card-action.making { background: var(--blue); color: #fff; }
+    .card-action.ready { background: var(--green); color: #fff; }
+    .card-action.served { background: rgba(255,255,255,.07); color: var(--text-muted); cursor: default; }
+    .card-action:hover:not(.served) { filter: brightness(1.12); }
+
+    .card-footer {
+      display: flex; align-items: center; padding: 0 10px 7px 14px; gap: 6px;
+    }
+    .card-footer-hint { font-size: 10px; color: var(--text-muted); flex: 1; }
+    .card-more-btn {
+      padding: 3px 8px; border-radius: 5px; border: 1px solid var(--border);
+      background: transparent; color: var(--text-muted); font-size: 11px; cursor: pointer;
+      transition: all .15s;
+    }
+    .card-more-btn:hover { background: rgba(255,255,255,.07); color: var(--text-primary); }
+
+    /* ── BOTTOM TOOLBAR ─────────────────────────── */
+    .btoolbar {
+      background: var(--bg-secondary); border-top: 1px solid var(--border);
+      padding: 7px 16px; display: flex; gap: 6px; align-items: center; flex-shrink: 0;
+    }
+    .tbtn {
+      padding: 5px 12px; border-radius: 7px; border: 1px solid var(--border);
+      background: rgba(255,255,255,.04); color: var(--text-secondary); cursor: pointer;
+      font-size: 12px; display: flex; align-items: center; gap: 5px; transition: all .15s;
+    }
+    .tbtn:hover { background: rgba(255,255,255,.08); color: var(--text-primary); }
+    .tbtn.hi { border-color: rgba(59,130,246,.4); color: var(--blue); }
+    .tbtn.hi:hover { background: var(--blue-dim); }
+
+    /* ── SUMMARY MODE ─────────────────────────── */
+    .summary-area { flex: 1; overflow-y: auto; padding: 14px; }
+    .sm-group {
+      background: var(--bg-card); border-radius: var(--radius); margin-bottom: 8px;
+      overflow: hidden; border: 2px solid transparent; transition: all .25s;
+    }
+    .sm-group.urge { border-color: var(--red); }
+    .sm-group.urgent { border-color: var(--red); box-shadow: 0 0 12px rgba(239,68,68,.3); }
+    .sm-row {
+      display: flex; align-items: center; padding: 11px 14px; gap: 10px;
+      cursor: pointer; transition: background .12s;
+    }
+    .sm-row:hover { background: rgba(255,255,255,.04); }
+    .sm-name { font-size: 14px; font-weight: 700; flex: 1; }
+    .sm-progress { font-size: 13px; font-weight: 700; color: var(--blue); min-width: 70px; }
+    .sm-wait { font-size: 11px; color: var(--text-muted); text-align: right; min-width: 80px; }
+    .sm-actions { display: flex; gap: 5px; flex-shrink: 0; }
+    .sm-abtn {
+      padding: 5px 10px; border-radius: 6px; border: none; cursor: pointer;
+      font-size: 12px; font-weight: 700; transition: all .15s;
+    }
+    .sm-abtn.advance { background: var(--blue); color: #fff; }
+    .sm-abtn.complete { background: var(--green); color: #fff; }
+    .sm-abtn.more {
+      background: rgba(255,255,255,.06); color: var(--text-secondary);
+      border: 1px solid var(--border); font-size: 14px;
+    }
+    .sm-abtn:hover { filter: brightness(1.1); }
+    .urge-tag { font-size: 10px; padding: 1px 5px; background: var(--red); border-radius: 3px; font-weight: 800; }
+    .sm-expand {
+      display: none; background: rgba(0,0,0,.25); border-top: 1px solid var(--border);
+    }
+    .sm-expand.show { display: block; }
+    .sm-exp-row {
+      display: flex; align-items: center; padding: 6px 14px 6px 28px; font-size: 11px; gap: 8px;
+      border-bottom: 1px solid rgba(255,255,255,.03);
+    }
+    .sm-exp-row:last-child { border-bottom: none; }
+    .sm-exp-num { font-weight: 700; }
+    .sm-exp-badge { padding: 1px 5px; border-radius: 3px; font-size: 9px; font-weight: 800; }
+    .sm-exp-badge.dine-in { background: var(--dine); color: #fff; }
+    .sm-exp-badge.takeout { background: var(--take); color: #fff; }
+    .sm-exp-badge.delivery { background: var(--dlvr); color: #fff; }
+    .sm-exp-missing { color: var(--text-muted); flex: 1; }
+    .sm-crit { font-size: 9px; padding: 1px 5px; border-radius: 3px; background: var(--red-dim); color: var(--red); border: 1px solid var(--red); font-weight: 800; }
+
+    /* ── SETTINGS ─────────────────────────── */
+    .settings-wrap { flex: 1; display: flex; overflow: hidden; }
+    .settings-sidebar {
+      width: 180px; background: var(--bg-secondary); padding: 14px 8px;
+      flex-shrink: 0; border-right: 1px solid var(--border); overflow-y: auto;
+    }
+    .ss-item {
+      padding: 9px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
+      color: var(--text-secondary); transition: all .15s; display: flex; align-items: center;
+      gap: 8px; margin-bottom: 2px;
+    }
+    .ss-item.active { background: var(--blue-dim); color: var(--blue); }
+    .ss-item:hover:not(.active) { background: rgba(255,255,255,.05); color: var(--text-primary); }
+    .settings-content { flex: 1; overflow-y: auto; padding: 22px 26px; }
+    .s-section { display: none; }
+    .s-section.active { display: block; }
+    .s-title {
+      font-size: 16px; font-weight: 800; margin-bottom: 18px; color: var(--text-primary);
+      padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    }
+    .s-group {
+      background: var(--bg-card); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px;
+    }
+    .s-group-title {
+      font-size: 10px; color: var(--text-muted); letter-spacing: .8px; text-transform: uppercase; margin-bottom: 10px;
+    }
+    .s-row {
+      display: flex; align-items: center; padding: 9px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .s-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .s-row-label { flex: 1; font-size: 13px; }
+    .s-row-sub { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+    .s-required { font-size: 9px; color: var(--orange); margin-left: 5px; }
+    .s-ctrl { flex-shrink: 0; }
+    .s-select {
+      background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary);
+      border-radius: 6px; padding: 4px 8px; font-size: 12px; cursor: pointer;
+    }
+    .delay-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+    .delay-row:last-child { border-bottom: none; }
+    .delay-lbl { font-size: 12px; font-weight: 700; width: 48px; flex-shrink: 0; }
+    .delay-lbl.warn { color: var(--yellow); }
+    .delay-lbl.alert { color: var(--orange); }
+    .delay-lbl.urgent { color: var(--red); }
+    .delay-slider { flex: 1; accent-color: var(--blue); }
+    .delay-val { font-size: 12px; color: var(--text-secondary); width: 46px; text-align: right; }
+    .blink-label { font-size: 11px; color: var(--text-muted); }
+    .color-row { display: flex; gap: 7px; flex-wrap: wrap; padding: 4px 0; }
+    .c-swatch { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: all .15s; }
+    .c-swatch.sel { border-color: #fff; transform: scale(1.1); }
+    .s-radio-group { display: flex; gap: 6px; }
+    .s-radio {
+      padding: 4px 10px; border-radius: 6px; border: 1.5px solid var(--border);
+      font-size: 12px; cursor: pointer; background: transparent; color: var(--text-secondary); transition: all .15s;
+    }
+    .s-radio.sel { border-color: var(--blue); color: var(--blue); background: var(--blue-dim); }
+    .issue-form { display: flex; flex-direction: column; gap: 12px; }
+    .issue-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+    .issue-input {
+      width: 100%; padding: 9px 12px; background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text-primary); font-size: 13px;
+    }
+    .issue-textarea {
+      width: 100%; padding: 9px 12px; background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text-primary); font-size: 13px; min-height: 100px; resize: vertical;
+    }
+    .issue-submit {
+      padding: 10px 20px; background: var(--blue); border: none; border-radius: 8px;
+      color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; align-self: flex-start; transition: filter .15s;
+    }
+    .issue-submit:hover { filter: brightness(1.1); }
+    .inventory-item {
+      display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); gap: 10px;
+    }
+    .inventory-item:last-child { border-bottom: none; }
+    .inv-name { flex: 1; font-size: 13px; }
+    .inv-stock { font-size: 12px; color: var(--text-secondary); }
+    .inv-soldout { font-size: 10px; padding: 2px 7px; border-radius: 4px; background: var(--red-dim); color: var(--red); border: 1px solid var(--red); }
+    .inv-ok { font-size: 10px; padding: 2px 7px; border-radius: 4px; background: var(--green-dim); color: var(--green); border: 1px solid var(--green); }
+
+    /* ── CONTEXT MENU MODAL ─────────────────────────── */
+    #ctxModal {
+      position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 1000;
+      display: none; align-items: center; justify-content: center;
+    }
+    #ctxModal.show { display: flex; }
+    .ctx-menu {
+      background: #252535; border-radius: 14px; padding: 6px;
+      min-width: 210px; box-shadow: 0 20px 60px rgba(0,0,0,.6);
+      animation: pop-in .15s ease;
+    }
+    @keyframes pop-in { from { transform: scale(.92); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+    .ctx-title { padding: 10px 14px 6px; font-size: 11px; color: var(--text-muted); letter-spacing: .5px; }
+    .ctx-item {
+      padding: 10px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
+      display: flex; align-items: center; gap: 10px; transition: background .12s;
+    }
+    .ctx-item:hover { background: rgba(255,255,255,.07); }
+    .ctx-item.danger { color: var(--red); }
+    .ctx-item.disabled { opacity: .35; cursor: default; pointer-events: none; }
+    .ctx-divider { height: 1px; background: var(--border); margin: 4px 0; }
+    .ctx-icon { font-size: 15px; width: 20px; text-align: center; }
+
+    /* ── COMPLETED PANEL ─────────────────────────── */
+    #completedPanel {
+      position: fixed; right: 0; top: 52px; bottom: 0; width: 300px;
+      background: var(--bg-secondary); border-left: 1px solid var(--border); z-index: 500;
+      transform: translateX(100%); transition: transform .25s; display: flex; flex-direction: column;
+    }
+    #completedPanel.show { transform: translateX(0); }
+    .cp-head {
+      padding: 14px 18px; border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+    }
+    .cp-head h3 { font-size: 14px; font-weight: 700; }
+    .cp-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; }
+    .cp-list { flex: 1; overflow-y: auto; }
+    .cp-item {
+      padding: 11px 18px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .12s;
+    }
+    .cp-item:hover { background: rgba(255,255,255,.04); }
+    .cp-item-head { display: flex; align-items: center; gap: 7px; }
+    .cp-item-num { font-size: 14px; font-weight: 700; }
+    .cp-item-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .cp-restore {
+      font-size: 11px; color: var(--blue); padding: 2px 8px; border-radius: 5px;
+      border: 1px solid rgba(59,130,246,.35); background: var(--blue-dim); cursor: pointer; transition: all .15s; margin-top: 5px;
+    }
+    .cp-restore:hover { background: rgba(59,130,246,.25); }
+    .cp-empty { padding: 30px; text-align: center; color: var(--text-muted); font-size: 13px; }
+
+    /* ── TOAST ─────────────────────────── */
+    #toasts {
+      position: fixed; top: 62px; right: 16px; z-index: 2000;
+      display: flex; flex-direction: column; gap: 6px; pointer-events: none;
+    }
+    .toast {
+      background: #252535; border-radius: 9px; padding: 10px 14px;
+      font-size: 12px; border-left: 3px solid var(--blue);
+      box-shadow: 0 8px 24px rgba(0,0,0,.4); display: flex; align-items: center; gap: 8px;
+      animation: slide-in .25s ease; max-width: 260px; pointer-events: auto;
+    }
+    .toast.ok { border-left-color: var(--green); }
+    .toast.warn { border-left-color: var(--orange); }
+    .toast.err { border-left-color: var(--red); }
+    .toast.voice { border-left-color: var(--purple); }
+    @keyframes slide-in { from { transform: translateX(110%); opacity: 0 } to { transform: translateX(0); opacity: 1 } }
+    .toast-icon { font-size: 14px; }
+
+    /* ── MODE BADGE ─────────────────────────── */
+    .mode-badge {
+      font-size: 10px; padding: 2px 8px; border-radius: 6px; font-weight: 700;
+      background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(59,130,246,.3);
+    }
+    .mode-badge.voice-on { background: rgba(168,85,247,.15); color: var(--purple); border-color: rgba(168,85,247,.35); }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- NAV BAR -->
+<div id="navBar">
+  <span class="nav-logo">🍴 KDS</span>
+  <div class="nav-tabs">
+    <button class="nav-tab active" id="tab-standard" onclick="switchMode('standard')">📋 標準模式</button>
+    <button class="nav-tab" id="tab-summary" onclick="switchMode('summary')">📊 總表模式</button>
+    <button class="nav-tab" id="tab-settings" onclick="switchMode('settings')">⚙️ 設定</button>
+  </div>
+  <span class="mode-badge" id="modeBadge">無語音</span>
+  <div class="voice-wrap" id="voiceWrap">
+    <span class="voice-mic">🎙️</span>
+    <span class="voice-label">語音輔助</span>
+    <label class="toggle">
+      <input type="checkbox" id="voiceToggle" onchange="toggleVoice()">
+      <span class="tog-slider"></span>
+    </label>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ═══════════════════════════ STANDARD MODE ═══════════════════════════ -->
+<div class="view active" id="view-standard">
+  <div class="filter-bar">
+    <span class="filter-label">篩選：</span>
+    <button class="fbtn" data-f="dine-in" onclick="toggleFilter(this,'standard')">內用</button>
+    <button class="fbtn" data-f="takeout" onclick="toggleFilter(this,'standard')">外帶</button>
+    <button class="fbtn" data-f="delivery" onclick="toggleFilter(this,'standard')">外送</button>
+    <button class="fbtn" data-f="ue" onclick="toggleFilter(this,'standard')">UE</button>
+    <button class="fbtn" data-f="fp" onclick="toggleFilter(this,'standard')">FP</button>
+    <span class="filter-count" id="std-count"></span>
+  </div>
+  <div class="voice-panel" id="std-voice-panel">
+    <div class="vp-status"><div class="vp-dot"></div>語音監聽中</div>
+    <div class="vp-cmds">
+      <button class="vcmd" onclick="voiceCmd('出餐','standard')">「出餐」</button>
+      <button class="vcmd" onclick="voiceCmd('完成','standard')">「完成」</button>
+      <button class="vcmd" onclick="voiceCmd('外送','standard')">「外送」</button>
+      <button class="vcmd" onclick="voiceCmd('內用','standard')">「內用」</button>
+      <button class="vcmd" onclick="voiceCmd('外帶','standard')">「外帶」</button>
+      <button class="vcmd" onclick="voiceCmd('叫號','standard')">「叫號」</button>
+    </div>
+    <span class="vp-hint">點擊模擬語音指令</span>
+  </div>
+  <div class="orders-area" id="std-orders"></div>
+  <div class="btoolbar">
+    <button class="tbtn" onclick="showCompleted()">📦 已完成 <span id="cp-count" style="background:var(--blue);color:#fff;border-radius:8px;padding:0 5px;font-size:11px;">0</span></button>
+    <button class="tbtn" onclick="toast('↩️ 已撤銷上一筆品項操作','ok')">↩️ 回復</button>
+    <button class="tbtn" onclick="toast('🔄 設定已重新整理','ok')">🔄 重整</button>
+    <button class="tbtn hi" onclick="switchMode('settings')">⚙️ 設定</button>
+    <button class="tbtn" onclick="toast('📋 訂單查詢功能','')">🔍 訂單查詢</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ SUMMARY MODE ═══════════════════════════ -->
+<div class="view" id="view-summary">
+  <div class="filter-bar">
+    <span class="filter-label">篩選：</span>
+    <button class="fbtn" data-f="dine-in" onclick="toggleFilter(this,'summary')">內用</button>
+    <button class="fbtn" data-f="takeout" onclick="toggleFilter(this,'summary')">外帶</button>
+    <button class="fbtn" data-f="delivery" onclick="toggleFilter(this,'summary')">外送</button>
+    <button class="fbtn" data-f="ue" onclick="toggleFilter(this,'summary')">UE</button>
+    <button class="fbtn" data-f="fp" onclick="toggleFilter(this,'summary')">FP</button>
+    <span class="filter-count" id="sum-count"></span>
+  </div>
+  <div class="voice-panel" id="sum-voice-panel">
+    <div class="vp-status"><div class="vp-dot"></div>語音監聽中</div>
+    <div class="vp-cmds">
+      <button class="vcmd" onclick="voiceCmd('全完成','summary')">「全完成」</button>
+      <button class="vcmd" onclick="voiceCmd('外送','summary')">「外送」</button>
+      <button class="vcmd" onclick="voiceCmd('拿鐵幾份','summary')">「拿鐵幾份」</button>
+      <button class="vcmd" onclick="voiceCmd('煎台','summary')">「煎台」</button>
+    </div>
+    <span class="vp-hint">點擊模擬語音指令</span>
+  </div>
+  <div class="summary-area" id="sum-area"></div>
+  <div class="btoolbar">
+    <button class="tbtn" onclick="toast('↩️ 已撤銷上一筆品項操作','ok')">↩️ 回復</button>
+    <button class="tbtn" onclick="toast('🔄 設定已重新整理','ok')">🔄 重整</button>
+    <button class="tbtn hi" onclick="switchMode('settings')">⚙️ 設定</button>
+    <button class="tbtn" onclick="toast('📋 訂單查詢功能','')">🔍 訂單查詢</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ SETTINGS ═══════════════════════════ -->
+<div class="view" id="view-settings">
+  <div class="settings-wrap">
+    <div class="settings-sidebar">
+      <div class="ss-item active" onclick="switchSettingsTab('general',this)">⚙️ 設定</div>
+      <div class="ss-item" onclick="switchSettingsTab('advanced',this)">🔧 進階設定</div>
+      <div class="ss-item" onclick="switchSettingsTab('menu',this)">📋 菜單設定</div>
+      <div class="ss-item" onclick="switchSettingsTab('inventory',this)">📦 庫存關聯</div>
+      <div class="ss-item" onclick="switchSettingsTab('report',this)">🚩 問題回報</div>
+    </div>
+    <div class="settings-content">
+
+      <!-- 設定 -->
+      <div class="s-section active" id="s-general">
+        <div class="s-title">⚙️ 一般設定</div>
+
+        <div class="s-group">
+          <div class="s-group-title">版面設定</div>
+          <div class="s-row">
+            <div class="s-row-label">版面欄數<div class="s-row-sub">標準模式顯示欄數</div></div>
+            <div class="s-ctrl">
+              <div class="s-radio-group">
+                <button class="s-radio" onclick="selectRadio(this,'layout')">1×3</button>
+                <button class="s-radio sel" onclick="selectRadio(this,'layout')">2×3</button>
+                <button class="s-radio" onclick="selectRadio(this,'layout')">3×3</button>
+              </div>
+            </div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">顯示模式<div class="s-row-sub">依訂單 或 依商品顯示</div></div>
+            <div class="s-ctrl">
+              <div class="s-radio-group">
+                <button class="s-radio sel" onclick="selectRadio(this,'dispmode')">依訂單</button>
+                <button class="s-radio" onclick="selectRadio(this,'dispmode')">依商品</button>
+              </div>
+            </div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">訂單排序<div class="s-row-sub">卡片排列順序</div></div>
+            <div class="s-ctrl">
+              <select class="s-select">
+                <option>時間（早→晚）</option>
+                <option>時間（晚→早）</option>
+                <option>狀態（正序）</option>
+                <option>狀態（倒序）</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="s-group">
+          <div class="s-group-title">訂單狀態顯示</div>
+          <div class="s-row">
+            <div class="s-row-label">製作中<span class="s-required">必要</span><div class="s-row-sub">進單自動觸發，不可取消</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked disabled><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">出餐<div class="s-row-sub">標記訂單備餐完成</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked onchange="toast('設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">已取餐<span class="s-required">必要</span><div class="s-row-sub">點選後訂單消單</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked disabled><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">叫號<div class="s-row-sub">觸發 CDS 裝置叫號播放</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked onchange="toast('設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">退單<div class="s-row-sub">訂單取消</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked onchange="toast('設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">全部出餐<div class="s-row-sub">強制完成所有品項</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" onchange="toast('設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">異常通知<div class="s-row-sub">CDS 裝置同步顯示異常</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" onchange="toast('設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">列印標籤<div class="s-row-sub">列印品項標籤 / 廚房單</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" onchange="toast('設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">補印<div class="s-row-sub">補印廚房單或標籤</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" onchange="toast('設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+        </div>
+
+        <div class="s-group">
+          <div class="s-group-title">品項狀態顯示</div>
+          <div class="s-row">
+            <div class="s-row-label">未做<span class="s-required">必要</span><div class="s-row-sub">預設狀態，不可取消</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked disabled><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">已做<div class="s-row-sub">中間進度狀態（可選擇顯示）</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked onchange="toast('設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">完成<span class="s-required">必要</span><div class="s-row-sub">完成後不可取消</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked disabled><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">刪除<div class="s-row-sub">後結內用限定</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" onchange="toast('設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">設為售完<div class="s-row-sub">庫存同步更新</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked onchange="toast('設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+        </div>
+
+        <div class="s-group">
+          <div class="s-group-title">訂單資訊顯示</div>
+          <div class="s-row">
+            <div class="s-row-label">自動展開備註<div class="s-row-sub">進單即顯示備註，不需手動展開</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" onchange="toast('設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">客人電話<div class="s-row-sub">顯示訂單手機資訊</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked onchange="toast('設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">訂餐位址<div class="s-row-sub">顯示客戶輸入地址</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked onchange="toast('設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">訂餐姓名<div class="s-row-sub">顯示客戶輸入姓名</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked onchange="toast('設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">取餐時間<div class="s-row-sub">預約取餐時間</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" onchange="toast('設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 進階設定 -->
+      <div class="s-section" id="s-advanced">
+        <div class="s-title">🔧 進階設定</div>
+
+        <div class="s-group">
+          <div class="s-group-title">延遲警示 — 時間門檻</div>
+          <div class="delay-row">
+            <div class="delay-lbl warn">⚠️ 提醒</div>
+            <input type="range" class="delay-slider" min="3" max="30" value="10" oninput="updateSlider(this,'delay-warn-val','分鐘')">
+            <span class="delay-val" id="delay-warn-val">10 分鐘</span>
+            <span class="blink-label">閃爍</span>
+            <label class="toggle"><input type="checkbox" onchange="toast('閃爍設定已更新','ok')"><span class="tog-slider"></span></label>
+          </div>
+          <div class="delay-row">
+            <div class="delay-lbl alert">🔶 警告</div>
+            <input type="range" class="delay-slider" min="5" max="45" value="20" oninput="updateSlider(this,'delay-alert-val','分鐘')">
+            <span class="delay-val" id="delay-alert-val">20 分鐘</span>
+            <span class="blink-label">閃爍</span>
+            <label class="toggle"><input type="checkbox" checked onchange="toast('閃爍設定已更新','ok')"><span class="tog-slider"></span></label>
+          </div>
+          <div class="delay-row">
+            <div class="delay-lbl urgent">🔴 緊急</div>
+            <input type="range" class="delay-slider" min="10" max="60" value="30" oninput="updateSlider(this,'delay-urgent-val','分鐘')">
+            <span class="delay-val" id="delay-urgent-val">30 分鐘</span>
+            <span class="blink-label">閃爍</span>
+            <label class="toggle"><input type="checkbox" checked onchange="toast('閃爍設定已更新','ok')"><span class="tog-slider"></span></label>
+          </div>
+        </div>
+
+        <div class="s-group">
+          <div class="s-group-title">顏色系統</div>
+          <div class="s-row">
+            <div class="s-row-label">訂單狀態條顏色<div class="s-row-sub">卡片左側 4px 色條</div></div>
+            <div class="s-ctrl">
+              <div class="color-row">
+                <div class="c-swatch sel" style="background:#3b82f6" onclick="selectColor(this,'status')"></div>
+                <div class="c-swatch" style="background:#6366f1" onclick="selectColor(this,'status')"></div>
+                <div class="c-swatch" style="background:#8b5cf6" onclick="selectColor(this,'status')"></div>
+                <div class="c-swatch" style="background:#06b6d4" onclick="selectColor(this,'status')"></div>
+              </div>
+            </div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">已做品項色<div class="s-row-sub">中間進度顏色（TBD）</div></div>
+            <div class="s-ctrl">
+              <div class="color-row">
+                <div class="c-swatch sel" style="background:#475569" onclick="selectColor(this,'doing')"></div>
+                <div class="c-swatch" style="background:#1e40af" onclick="selectColor(this,'doing')"></div>
+                <div class="c-swatch" style="background:#5d6d7e" onclick="selectColor(this,'doing')"></div>
+                <div class="c-swatch" style="background:#4b5e6d" onclick="selectColor(this,'doing')"></div>
+              </div>
+            </div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">完成品項色<div class="s-row-sub">已完成狀態顏色（TBD）</div></div>
+            <div class="s-ctrl">
+              <div class="color-row">
+                <div class="c-swatch sel" style="background:#166534" onclick="selectColor(this,'done')"></div>
+                <div class="c-swatch" style="background:#15803d" onclick="selectColor(this,'done')"></div>
+                <div class="c-swatch" style="background:#065f46" onclick="selectColor(this,'done')"></div>
+                <div class="c-swatch" style="background:#14532d" onclick="selectColor(this,'done')"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="s-group">
+          <div class="s-group-title">跨裝置同步</div>
+          <div class="s-row">
+            <div class="s-row-label">品項狀態即時同步<div class="s-row-sub">製作站 → 出餐台 即時更新進度</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked onchange="toast('同步設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">CDS 叫號連動<div class="s-row-sub">出餐同時自動觸發叫號，latency &lt; 1s</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked onchange="toast('CDS 連動設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">指定 CDS 裝置<div class="s-row-sub">多台 CDS 時對應指定設備</div></div>
+            <div class="s-ctrl">
+              <select class="s-select">
+                <option>CDS-主機 #1</option>
+                <option>CDS-主機 #2</option>
+                <option>全部播放</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="s-group">
+          <div class="s-group-title">語音輔助（POC）</div>
+          <div class="s-row">
+            <div class="s-row-label">語音辨識引擎<div class="s-row-sub">POC 階段使用瀏覽器原生 API</div></div>
+            <div class="s-ctrl">
+              <select class="s-select">
+                <option>瀏覽器原生</option>
+                <option>台大語音模型（評估中）</option>
+              </select>
+            </div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">語音/觸控並行<div class="s-row-sub">同時觸發時，語音優先</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked onchange="toast('並行設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">批量操作二次確認<div class="s-row-sub">「全完成」前需語音確認防呆</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked onchange="toast('防呆設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 菜單設定 -->
+      <div class="s-section" id="s-menu">
+        <div class="s-title">📋 菜單設定</div>
+        <div class="s-group">
+          <div class="s-group-title">服務類型顯示</div>
+          <div class="s-row">
+            <div class="s-row-label">內用<span class="s-required">必要</span></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked disabled><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">外帶<span class="s-required">必要</span></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked disabled><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">外送<div class="s-row-sub">包含自建外送</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked onchange="toast('設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">Uber Eats (UE)<div class="s-row-sub">外送平台識別標籤</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked onchange="toast('設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">FoodPanda (FP)<div class="s-row-sub">外送平台識別標籤</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" onchange="toast('設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+        </div>
+        <div class="s-group">
+          <div class="s-group-title">分站顯示設定</div>
+          <div class="s-row">
+            <div class="s-row-label">啟用分站顯示<div class="s-row-sub">KDS 裝置只顯示指定站台品項</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" onchange="toast('分站功能已啟用，請至 Portal 完成設定','warn')"><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">站台代碼<div class="s-row-sub">選擇此裝置對應的站台</div></div>
+            <div class="s-ctrl">
+              <select class="s-select">
+                <option>未設定</option>
+                <option>炒台</option>
+                <option>煎台</option>
+                <option>冷飲站</option>
+                <option>出餐台</option>
+              </select>
+            </div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label" style="color:var(--text-muted);font-size:11px;">📌 進階分站（屬性過濾）規則請至 Portal 後台設定</div>
+            <div class="s-ctrl"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 庫存關聯 -->
+      <div class="s-section" id="s-inventory">
+        <div class="s-title">📦 庫存關聯</div>
+        <div class="s-group">
+          <div class="s-group-title">售完品項管理</div>
+          <div class="inventory-item">
+            <div class="inv-name">拿鐵咖啡</div>
+            <div class="inv-stock">剩餘：3</div>
+            <span class="inv-ok">供應中</span>
+          </div>
+          <div class="inventory-item">
+            <div class="inv-name">牛肉麵</div>
+            <div class="inv-stock">剩餘：0</div>
+            <span class="inv-soldout">售完</span>
+          </div>
+          <div class="inventory-item">
+            <div class="inv-name">炒飯</div>
+            <div class="inv-stock">剩餘：8</div>
+            <span class="inv-ok">供應中</span>
+          </div>
+          <div class="inventory-item">
+            <div class="inv-name">雞腿飯</div>
+            <div class="inv-stock">剩餘：2</div>
+            <span class="inv-ok">供應中</span>
+          </div>
+          <div class="inventory-item">
+            <div class="inv-name">珍珠奶茶</div>
+            <div class="inv-stock">剩餘：0</div>
+            <span class="inv-soldout">售完</span>
+          </div>
+        </div>
+        <div class="s-group">
+          <div class="s-group-title">庫存同步設定</div>
+          <div class="s-row">
+            <div class="s-row-label">設為售完時同步庫存<div class="s-row-sub">品項標記售完後即時更新 Portal</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked onchange="toast('庫存同步設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-label">售完品項提示<div class="s-row-sub">訂單含售完品項時顯示警示</div></div>
+            <div class="s-ctrl"><label class="toggle"><input type="checkbox" checked onchange="toast('設定已更新','ok')"><span class="tog-slider"></span></label></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 問題回報 -->
+      <div class="s-section" id="s-report">
+        <div class="s-title">🚩 問題回報</div>
+        <div class="s-group">
+          <div class="issue-form">
+            <div>
+              <div class="issue-label">問題類型</div>
+              <select class="s-select" style="width:100%">
+                <option>訂單顯示異常</option>
+                <option>品項狀態錯誤</option>
+                <option>語音辨識問題</option>
+                <option>跨裝置同步異常</option>
+                <option>CDS 叫號無反應</option>
+                <option>其他</option>
+              </select>
+            </div>
+            <div>
+              <div class="issue-label">發生時間</div>
+              <input type="datetime-local" class="issue-input">
+            </div>
+            <div>
+              <div class="issue-label">問題描述</div>
+              <textarea class="issue-textarea" placeholder="請描述遇到的問題，包含操作步驟與預期行為..."></textarea>
+            </div>
+            <div>
+              <div class="issue-label">裝置資訊</div>
+              <input type="text" class="issue-input" value="KDS-出餐台 #1 | v1.0 POC">
+            </div>
+            <button class="issue-submit" onclick="toast('✅ 問題回報已送出，謝謝！','ok')">送出回報</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</div><!-- end .main -->
+
+<!-- CONTEXT MENU MODAL -->
+<div id="ctxModal" onclick="if(event.target===this)closeCtx()">
+  <div class="ctx-menu" id="ctxMenuContent"></div>
+</div>
+
+<!-- COMPLETED ORDERS PANEL -->
+<div id="completedPanel">
+  <div class="cp-head">
+    <h3>📦 已完成訂單</h3>
+    <button class="cp-close" onclick="closeCompleted()">✕</button>
+  </div>
+  <div class="cp-list" id="cpList"></div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toasts"></div>
+
+<script>
+// ═══════════ STATE ═══════════
+const state = {
+  mode: 'standard',
+  voiceOn: false,
+  stdFilter: null,
+  sumFilter: null,
+  completedOrders: [],
+  orders: [
+    {
+      id:'001', type:'dine-in', table:'5號', time:'18:23', elapsed: 28,
+      status:'making', note:'不要太辣', name:'', phone:'',
+      items:[
+        {id:1, name:'拿鐵咖啡', qty:1, attr:'大杯', note:'', status:'done', urge:false},
+        {id:2, name:'牛肉麵', qty:1, attr:'辣', note:'不加蔥', status:'doing', urge:true},
+        {id:3, name:'滷蛋', qty:2, attr:'', note:'', status:'todo', urge:false},
+      ]
+    },
+    {
+      id:'002', type:'takeout', table:'', time:'18:31', elapsed: 15,
+      status:'making', note:'', name:'王小明', phone:'0912-345-678',
+      items:[
+        {id:4, name:'炒飯', qty:1, attr:'蛋炒飯', note:'', status:'done', urge:false},
+        {id:5, name:'雞排', qty:1, attr:'', note:'不加辣', status:'done', urge:false},
+        {id:6, name:'珍珠奶茶', qty:1, attr:'全糖去冰', note:'', status:'todo', urge:false},
+      ]
+    },
+    {
+      id:'003', type:'delivery', table:'', time:'18:18', elapsed: 35,
+      status:'ready', note:'', name:'陳大文', phone:'',
+      items:[
+        {id:7, name:'披薩', qty:1, attr:'夏威夷', note:'', status:'done', urge:false},
+        {id:8, name:'沙拉', qty:1, attr:'凱薩', note:'', status:'done', urge:false},
+      ]
+    },
+    {
+      id:'004', type:'dine-in', table:'3號', time:'18:35', elapsed: 8,
+      status:'making', note:'', name:'', phone:'',
+      items:[
+        {id:9, name:'雞腿飯', qty:1, attr:'', note:'', status:'todo', urge:false},
+        {id:10, name:'湯品', qty:1, attr:'味噌湯', note:'', status:'todo', urge:false},
+      ]
+    },
+    {
+      id:'005', type:'ue', table:'', time:'18:29', elapsed: 18,
+      status:'making', note:'外送請準備餐袋', name:'', phone:'',
+      items:[
+        {id:11, name:'漢堡', qty:2, attr:'雙層', note:'不要醬', status:'doing', urge:false},
+        {id:12, name:'薯條', qty:1, attr:'大份', note:'', status:'todo', urge:false},
+        {id:13, name:'可樂', qty:2, attr:'中杯', note:'', status:'done', urge:false},
+      ]
+    },
+  ],
+  summaryItems: [
+    { name:'拿鐵咖啡', total:4, done:2, orders:[{num:'001',type:'dine-in',missing:'滷蛋',crit:true},{num:'005',type:'ue',missing:'薯條',crit:false},{num:'006',type:'takeout',missing:'雞排',crit:false},{num:'009',type:'dine-in',missing:'無',crit:false}], wait:'28分鐘', urge:true, expanded:false },
+    { name:'牛肉麵', total:2, done:0, orders:[{num:'001',type:'dine-in',missing:'拿鐵+滷蛋',crit:false},{num:'007',type:'takeout',missing:'無',crit:true}], wait:'28分鐘', urge:false, expanded:false },
+    { name:'炒飯', total:3, done:2, orders:[{num:'002',type:'takeout',missing:'珍奶',crit:true},{num:'008',type:'dine-in',missing:'無',crit:false},{num:'010',type:'dine-in',missing:'湯品',crit:false}], wait:'15分鐘', urge:false, expanded:false },
+    { name:'雞腿飯', total:1, done:0, orders:[{num:'004',type:'dine-in',missing:'湯品',crit:true}], wait:'8分鐘', urge:false, expanded:false },
+    { name:'漢堡', total:3, done:1, orders:[{num:'005',type:'ue',missing:'薯條',crit:false},{num:'011',type:'delivery',missing:'無',crit:true},{num:'012',type:'dine-in',missing:'飲料',crit:false}], wait:'18分鐘', urge:false, expanded:false },
+    { name:'珍珠奶茶', total:2, done:0, orders:[{num:'002',type:'takeout',missing:'雞排',crit:true},{num:'013',type:'takeout',missing:'無',crit:false}], wait:'15分鐘', urge:false, expanded:false },
+  ],
+};
+
+// ═══════════ RENDER STANDARD MODE ═══════════
+function renderStandard() {
+  const grid = document.getElementById('std-orders');
+  const filter = state.stdFilter;
+  const visible = state.orders.filter(o => !filter || o.type === filter);
+  document.getElementById('std-count').textContent = `顯示 ${visible.length} 筆`;
+  grid.innerHTML = visible.map(o => renderOrderCard(o)).join('');
+}
+
+function renderOrderCard(o) {
+  const doneCount = o.items.filter(i=>i.status==='done').length;
+  const total = o.items.length;
+  const allDone = doneCount === total;
+  const delayClass = o.elapsed >= 30 ? 'delay-urgent' : o.elapsed >= 20 ? 'delay-alert' : o.elapsed >= 10 ? 'delay-warn' : '';
+  const readyClass = allDone && o.status==='making' ? 'all-ready' : '';
+  const actionText = o.status==='making' ? (allDone ? '✅ 確認出餐' : '出餐') : o.status==='ready' ? '✔ 確認已取餐' : '已取餐';
+  const actionClass = o.status==='making' ? 'making' : o.status==='ready' ? 'ready' : 'served';
+  const progClass = allDone ? 'done-all' : '';
+  const metaHtml = [o.table ? `🪑 ${o.table}` : '', o.name ? `👤 ${o.name}` : '', o.phone ? `📞 ${o.phone}` : ''].filter(Boolean).join(' ');
+  const noteHtml = o.note ? `<div class="card-note">📝 ${o.note}</div>` : '';
+
+  return `<div class="order-card ${delayClass} ${readyClass}" data-id="${o.id}" data-status="${o.status}">
+    <div class="card-head">
+      <span class="svc-badge ${o.type}">${svcLabel(o.type)}</span>
+      <span class="order-num">#${o.id}</span>
+      <span class="order-time">${o.time}</span>
+      <span class="order-prog ${progClass}">完成 ${doneCount}/${total}</span>
+    </div>
+    ${metaHtml ? `<div class="card-meta">${metaHtml} ${o.elapsed>=20?`<span style="color:var(--${o.elapsed>=30?'red':'orange'})">⏱ ${o.elapsed}m</span>`:'<span style="color:var(--text-muted)">⏱ '+o.elapsed+'m</span>'}</div>` : `<div class="card-meta"><span style="color:var(--text-muted)">⏱ ${o.elapsed}m</span></div>`}
+    <div class="items-list">${o.items.map(i=>renderItem(i)).join('')}</div>
+    ${noteHtml}
+    <button class="card-action ${actionClass}" onclick="advanceOrder('${o.id}')" ${o.status==='served'?'disabled':''}>${actionText}</button>
+    <div class="card-footer">
+      <span class="card-footer-hint">長按 = 更多選項</span>
+      <button class="card-more-btn" onclick="showOrderCtx('${o.id}')">⋮ 更多</button>
+    </div>
+  </div>`;
+}
+
+function renderItem(i) {
+  const dotClass = i.status;
+  const nameClass = i.status==='done' ? 'done' : '';
+  const urgeHtml = i.urge ? '<span class="item-urge">催</span>' : '';
+  return `<div class="item-row" onclick="advanceItem(event,'${i.id}')">
+    <div class="item-dot ${dotClass}"></div>
+    <span class="item-name ${nameClass}">${i.name} <span class="item-attr">${i.attr||''}</span></span>
+    ${i.note?`<span class="item-note">${i.note}</span>`:''}
+    ${urgeHtml}
+    <span class="item-qty">×${i.qty}</span>
+    <button class="item-menu-btn" onclick="event.stopPropagation();showItemCtx('${i.id}')">⋮</button>
+  </div>`;
+}
+
+// ═══════════ RENDER SUMMARY MODE ═══════════
+function renderSummary() {
+  const area = document.getElementById('sum-area');
+  const filter = state.sumFilter;
+  const items = state.summaryItems;
+  document.getElementById('sum-count').textContent = `顯示 ${items.length} 品項`;
+  area.innerHTML = items.map((it, idx) => renderSummaryGroup(it, idx)).join('');
+}
+
+function renderSummaryGroup(it, idx) {
+  const progPct = it.total > 0 ? Math.round(it.done/it.total*100) : 0;
+  const progressColor = progPct === 100 ? 'var(--green)' : progPct >= 50 ? 'var(--blue)' : 'var(--text-secondary)';
+  const urgeClass = it.urge ? 'urge' : '';
+  const expandHtml = it.expanded ? `<div class="sm-expand show">${it.orders.map(o=>`
+    <div class="sm-exp-row">
+      <span class="sm-exp-num">#${o.num}</span>
+      <span class="sm-exp-badge ${o.type}">${svcLabel(o.type)}</span>
+      <span class="sm-exp-missing">缺：${o.missing}</span>
+      ${o.crit ? '<span class="sm-crit">⚡ 缺此即可出</span>' : ''}
+    </div>`).join('')}</div>` : '<div class="sm-expand"></div>';
+
+  return `<div class="sm-group ${urgeClass}" id="sg-${idx}">
+    <div class="sm-row" onclick="toggleExpand(${idx})">
+      ${it.urge ? '<span class="urge-tag">催</span>' : ''}
+      <span class="sm-name">${it.name}</span>
+      <span class="sm-progress" style="color:${progressColor}">已做 ${it.done}/${it.total}</span>
+      <span class="sm-wait">最早 ${it.wait}</span>
+      <div class="sm-actions" onclick="event.stopPropagation()">
+        <button class="sm-abtn advance" onclick="advanceSummaryItem(${idx})">已做</button>
+        <button class="sm-abtn complete" onclick="completeSummaryItem(${idx})">完成</button>
+        <button class="sm-abtn more" onclick="showSummaryCtx(${idx})">⋮</button>
+      </div>
+    </div>
+    ${expandHtml}
+  </div>`;
+}
+
+// ═══════════ ACTIONS ═══════════
+function advanceOrder(id) {
+  const o = state.orders.find(x=>x.id===id);
+  if (!o) return;
+  if (o.status === 'making') {
+    const doneCount = o.items.filter(i=>i.status==='done').length;
+    if (doneCount < o.items.length) {
+      toast(`⚠️ 訂單 #${o.id} 尚有 ${o.items.length - doneCount} 個品項未完成`, 'warn');
+      return;
+    }
+    o.status = 'ready';
+    toast(`🍽️ 訂單 #${o.id} 已出餐！${state.voiceOn ? ' 語音：叫號播放中...' : ''}`, 'ok');
+    if (state.voiceOn) setTimeout(()=>toast('📢 CDS 叫號已觸發', 'voice'), 600);
+  } else if (o.status === 'ready') {
+    o.status = 'served';
+    state.completedOrders.unshift({...o, completedAt: new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})});
+    state.orders = state.orders.filter(x=>x.id!==id);
+    updateCpCount();
+    toast(`✅ 訂單 #${id} 已取餐，自動消單`, 'ok');
+  }
+  renderStandard();
+}
+
+function advanceItem(event, itemId) {
+  event.stopPropagation();
+  const id = parseInt(itemId);
+  for (const o of state.orders) {
+    const item = o.items.find(i=>i.id===id);
+    if (item) {
+      if (item.status === 'todo') { item.status = 'doing'; toast(`🔵 品項「${item.name}」→ 已做`, ''); }
+      else if (item.status === 'doing') { item.status = 'done'; toast(`✅ 品項「${item.name}」→ 完成`, 'ok'); }
+      else { toast('品項已完成，長按可回退', ''); }
+      break;
+    }
+  }
+  renderStandard();
+}
+
+function advanceSummaryItem(idx) {
+  const it = state.summaryItems[idx];
+  if (it.done < it.total) {
+    it.done++;
+    toast(`🔵 ${it.name} 已做 → ${it.done}/${it.total}`, '');
+    renderSummary();
+  } else { toast(`${it.name} 全部已完成`, 'ok'); }
+}
+
+function completeSummaryItem(idx) {
+  const it = state.summaryItems[idx];
+  if (it.done < it.total) {
+    it.done = it.total;
+    toast(`✅ ${it.name} 全部完成 (${it.total}份)，出餐台已更新`, 'ok');
+    renderSummary();
+  } else { toast(`${it.name} 已全部完成`, 'ok'); }
+}
+
+function toggleExpand(idx) {
+  state.summaryItems[idx].expanded = !state.summaryItems[idx].expanded;
+  renderSummary();
+}
+
+// ═══════════ CONTEXT MENUS ═══════════
+function showOrderCtx(id) {
+  const o = state.orders.find(x=>x.id===id);
+  const isServing = o && o.status === 'ready';
+  document.getElementById('ctxMenuContent').innerHTML = `
+    <div class="ctx-title">訂單 #${id} 操作</div>
+    <div class="ctx-item ${o&&o.status!=='making'?'disabled':''}" onclick="forceComplete('${id}')"><span class="ctx-icon">✅</span>全部出餐</div>
+    <div class="ctx-item ${isServing?'':'disabled'}" onclick="callNum('${id}')"><span class="ctx-icon">📢</span>補按叫號</div>
+    <div class="ctx-item" onclick="closeCtx();toast('📡 異常通知已發送至 CDS','warn')"><span class="ctx-icon">⚠️</span>異常通知</div>
+    <div class="ctx-divider"></div>
+    <div class="ctx-item danger" onclick="cancelOrder('${id}')"><span class="ctx-icon">🗑️</span>退單</div>
+    <div class="ctx-item" onclick="closeCtx();toast('🖨️ 列印標籤中...','')"><span class="ctx-icon">🖨️</span>列印標籤</div>
+    <div class="ctx-item" onclick="closeCtx();toast('🖨️ 補印廚房單中...','')"><span class="ctx-icon">📄</span>補印</div>
+  `;
+  document.getElementById('ctxModal').classList.add('show');
+}
+
+function showItemCtx(itemId) {
+  const id = parseInt(itemId);
+  let itemName = '';
+  for (const o of state.orders) { const i = o.items.find(x=>x.id===id); if(i){itemName=i.name;break;} }
+  document.getElementById('ctxMenuContent').innerHTML = `
+    <div class="ctx-title">品項「${itemName}」操作</div>
+    <div class="ctx-item" onclick="resetItem(${id})"><span class="ctx-icon">↩️</span>回退為未做</div>
+    <div class="ctx-item" onclick="closeCtx();toast('📦 品項設為售完，庫存已同步','warn')"><span class="ctx-icon">🚫</span>設為售完</div>
+    <div class="ctx-item danger" onclick="closeCtx();toast('🗑️ 品項已刪除','err')"><span class="ctx-icon">🗑️</span>刪除品項</div>
+  `;
+  document.getElementById('ctxModal').classList.add('show');
+}
+
+function showSummaryCtx(idx) {
+  const it = state.summaryItems[idx];
+  document.getElementById('ctxMenuContent').innerHTML = `
+    <div class="ctx-title">${it.name} — 批量操作</div>
+    <div class="ctx-item" onclick="closeCtx();batchComplete(${idx})"><span class="ctx-icon">⚡</span>批量完成（FIFO）</div>
+    <div class="ctx-item" onclick="closeCtx();toast('📦 ${it.name} 設為售完，庫存已同步','warn')"><span class="ctx-icon">🚫</span>設為售完</div>
+    <div class="ctx-item" onclick="closeCtx();toast('↩️ 已回退最後一筆操作','ok')"><span class="ctx-icon">↩️</span>回退</div>
+  `;
+  document.getElementById('ctxModal').classList.add('show');
+}
+
+function forceComplete(id) {
+  const o = state.orders.find(x=>x.id===id);
+  if (o) { o.items.forEach(i=>i.status='done'); toast(`✅ 訂單 #${id} 全部出餐`, 'ok'); }
+  closeCtx(); renderStandard();
+}
+
+function callNum(id) {
+  closeCtx(); toast(`📢 訂單 #${id} 叫號已補按，CDS 播放中`, 'ok');
+}
+
+function cancelOrder(id) {
+  state.orders = state.orders.filter(x=>x.id!==id);
+  closeCtx(); toast(`🗑️ 訂單 #${id} 已退單`, 'err'); renderStandard();
+}
+
+function resetItem(id) {
+  for (const o of state.orders) {
+    const item = o.items.find(i=>i.id===id);
+    if (item) { item.status = 'todo'; toast(`↩️ 品項「${item.name}」已回退為未做`, ''); break; }
+  }
+  closeCtx(); renderStandard();
+}
+
+function batchComplete(idx) {
+  const it = state.summaryItems[idx];
+  it.done = it.total;
+  toast(`⚡ ${it.name} FIFO 批量完成 ${it.total} 份`, 'ok');
+  renderSummary();
+}
+
+function closeCtx() { document.getElementById('ctxModal').classList.remove('show'); }
+
+// ═══════════ VOICE ═══════════
+function toggleVoice() {
+  state.voiceOn = document.getElementById('voiceToggle').checked;
+  const wrap = document.getElementById('voiceWrap');
+  const badge = document.getElementById('modeBadge');
+  const stdPanel = document.getElementById('std-voice-panel');
+  const sumPanel = document.getElementById('sum-voice-panel');
+  wrap.className = 'voice-wrap' + (state.voiceOn ? ' on' : '');
+  badge.textContent = state.voiceOn ? '語音輔助 ON' : '無語音';
+  badge.className = 'mode-badge' + (state.voiceOn ? ' voice-on' : '');
+  stdPanel.className = 'voice-panel' + (state.voiceOn ? ' show' : '');
+  sumPanel.className = 'voice-panel' + (state.voiceOn ? ' show' : '');
+  toast(state.voiceOn ? '🎙️ 語音輔助已開啟，開始監聽指令' : '🔇 語音輔助已關閉', state.voiceOn ? 'voice' : '');
+}
+
+function voiceCmd(cmd, mode) {
+  toast(`🎙️ 語音指令：「${cmd}」`, 'voice');
+  if (cmd === '出餐' && mode === 'standard') {
+    const o = state.orders.find(x=>x.status==='making' && x.items.filter(i=>i.status==='done').length===x.items.length);
+    if (o) { advanceOrder(o.id); }
+    else toast('⚠️ 目前沒有可出餐的訂單', 'warn');
+  } else if (cmd === '完成' && mode === 'standard') {
+    const o = state.orders.find(x=>x.status==='ready');
+    if (o) { advanceOrder(o.id); }
+    else toast('⚠️ 沒有出餐中的訂單', 'warn');
+  } else if (cmd === '叫號') {
+    toast('📢 CDS 叫號觸發（語音）', 'ok');
+  } else if (cmd === '全完成' && mode === 'summary') {
+    toast('⚠️ 批量完成需二次確認，請再說「確認」', 'warn');
+  } else if (cmd === '拿鐵幾份' && mode === 'summary') {
+    const it = state.summaryItems.find(x=>x.name.includes('拿鐵'));
+    if (it) toast(`📊 拿鐵咖啡：已做 ${it.done}/${it.total} 份，剩餘 ${it.total-it.done} 份`, 'ok');
+  } else if (['外送','內用','外帶'].includes(cmd)) {
+    const map = {'外送':'delivery','內用':'dine-in','外帶':'takeout'};
+    if (mode==='standard') { state.stdFilter = map[cmd]; document.querySelectorAll('#view-standard .fbtn').forEach(b=>b.classList.toggle('on', b.dataset.f===map[cmd])); renderStandard(); }
+    else { state.sumFilter = map[cmd]; renderSummary(); }
+    toast(`🔍 篩選：${cmd}`, '');
+  } else if (cmd === '煎台') {
+    toast('🔀 分站切換：煎台（需 Portal 設定站台代碼）', 'warn');
+  }
+}
+
+// ═══════════ FILTER ═══════════
+function toggleFilter(btn, mode) {
+  const type = btn.dataset.f;
+  if (mode === 'standard') {
+    state.stdFilter = state.stdFilter === type ? null : type;
+    document.querySelectorAll('#view-standard .fbtn').forEach(b=>b.classList.toggle('on', b.dataset.f===state.stdFilter));
+    renderStandard();
+  } else {
+    state.sumFilter = state.sumFilter === type ? null : type;
+    document.querySelectorAll('#view-summary .fbtn').forEach(b=>b.classList.toggle('on', b.dataset.f===state.sumFilter));
+    renderSummary();
+  }
+}
+
+// ═══════════ MODE SWITCH ═══════════
+function switchMode(mode) {
+  state.mode = mode;
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+mode).classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+mode).classList.add('active');
+  const vc = document.getElementById('voiceControl');
+  if (mode === 'settings') vc.style.opacity = '0.4';
+  else vc.style.opacity = '1';
+}
+
+// ═══════════ SETTINGS ═══════════
+function switchSettingsTab(tab, el) {
+  document.querySelectorAll('.ss-item').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.s-section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s-'+tab).classList.add('active');
+}
+
+function selectRadio(el, group) {
+  el.closest('.s-radio-group').querySelectorAll('.s-radio').forEach(r=>r.classList.remove('sel'));
+  el.classList.add('sel');
+  toast('設定已更新', 'ok');
+}
+
+function selectColor(el, group) {
+  el.closest('.color-row').querySelectorAll('.c-swatch').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  toast('顏色設定已更新', 'ok');
+}
+
+function updateSlider(el, valId, unit) {
+  document.getElementById(valId).textContent = el.value + ' ' + unit;
+}
+
+// ═══════════ COMPLETED ORDERS ═══════════
+function showCompleted() {
+  const panel = document.getElementById('completedPanel');
+  panel.classList.add('show');
+  const list = document.getElementById('cpList');
+  if (state.completedOrders.length === 0) {
+    list.innerHTML = '<div class="cp-empty">目前沒有已完成訂單</div>';
+  } else {
+    list.innerHTML = state.completedOrders.map(o=>`
+      <div class="cp-item">
+        <div class="cp-item-head">
+          <span class="svc-badge ${o.type}" style="font-size:9px;padding:1px 5px">${svcLabel(o.type)}</span>
+          <span class="cp-item-num">#${o.id}</span>
+        </div>
+        <div class="cp-item-meta">${o.time} · ${o.items.length} 品項 · 完成於 ${o.completedAt}</div>
+        <button class="cp-restore" onclick="restoreOrder('${o.id}')">↩ 重新帶回主畫面</button>
+      </div>`).join('');
+  }
+}
+
+function closeCompleted() { document.getElementById('completedPanel').classList.remove('show'); }
+
+function restoreOrder(id) {
+  const o = state.completedOrders.find(x=>x.id===id);
+  if (o) {
+    o.status = 'making';
+    o.items.forEach(i=>i.status='todo');
+    state.orders.unshift(o);
+    state.completedOrders = state.completedOrders.filter(x=>x.id!==id);
+    updateCpCount();
+    toast(`↩️ 訂單 #${id} 已重新帶回主畫面`, 'ok');
+    showCompleted(); renderStandard();
+  }
+}
+
+function updateCpCount() { document.getElementById('cp-count').textContent = state.completedOrders.length; }
+
+// ═══════════ TOAST ═══════════
+function toast(msg, type='') {
+  const c = document.getElementById('toasts');
+  const t = document.createElement('div');
+  const icon = type==='ok'?'✅':type==='warn'?'⚠️':type==='err'?'❌':type==='voice'?'🎙️':'ℹ️';
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span class="toast-icon">${icon}</span>${msg}`;
+  c.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(),300); }, 3200);
+}
+
+// ═══════════ HELPERS ═══════════
+function svcLabel(type) {
+  return {dine_in:'內用','dine-in':'內用',takeout:'外帶',delivery:'外送',ue:'UE',fp:'FP'}[type]||type;
+}
+
+// ═══════════ INIT ═══════════
+renderStandard();
+renderSummary();
+</script>
+</body>
+</html>
