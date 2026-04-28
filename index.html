@@ -1382,7 +1382,7 @@ function setMicUI(on) {
   });
   ['std-voice-status','sum-voice-status'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.textContent = on ? '收音中，請說指令...' : '待機中，點麥克風開說';
+    if (el) el.textContent = on ? '🔴 收音中，直接說指令' : '⏸ 暫停收音，點麥克風恢復';
   });
 }
 
@@ -1402,7 +1402,7 @@ function processVoiceCommand(raw, confidence) {
   updateTranscriptUI(raw, true);
   toast(`🎙️ 辨識：「${raw}」`, 'voice');
 
-  // 1. 喚醒詞 OK KDS
+  // 1. 喚醒詞 OK KDS（Prototype 中為可選，不強制）
   if (/ok\s*kds/i.test(raw)) {
     voiceState = 'ready'; failureCount = 0;
     setVoiceStateUI('ready');
@@ -1423,11 +1423,8 @@ function processVoiceCommand(raw, confidence) {
     return;
   }
 
-  // 3. 待命 → 需先說 OK KDS
-  if (voiceState === 'dormant') {
-    speak('請先說 OK KDS 啟動語音功能');
-    toast('💤 請先說「OK KDS」啟動', 'warn'); return;
-  }
+  // 3. Prototype demo：收音中即接受指令（不強制喚醒詞）
+  if (voiceState === 'dormant') voiceState = 'ready';
 
   // 4. 低信心值 → 請確認
   if (confidence < 0.65) {
@@ -1646,12 +1643,14 @@ function toggleVoice() {
     hideConfirmBanner(); failureCount = 0; pendingConfirm = null;
     toast('🔇 語音輔助已關閉', '');
   } else {
-    voiceState = 'dormant'; setVoiceStateUI('dormant');
     if (!SpeechRecognition) {
-      toast('⚠️ 瀏覽器不支援語音辨識（請用 Chrome）。模擬按鈕仍可使用', 'warn');
+      voiceState = 'dormant'; setVoiceStateUI('dormant');
+      toast('⚠️ 瀏覽器不支援語音辨識，請用 Chrome。模擬按鈕仍可使用', 'warn');
     } else {
-      toast('🎙️ 語音輔助已開啟，點麥克風後說「OK KDS」啟動', 'voice');
-      speak('語音輔助已開啟，說 OK KDS 啟動');
+      // 開關打開 → 自動開始收音，不需額外點擊麥克風
+      voiceState = 'ready'; setVoiceStateUI('ready');
+      startListening();
+      toast('🎙️ 語音收音中，直接說指令！', 'voice');
     }
   }
 }
