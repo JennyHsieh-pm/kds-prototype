@@ -130,7 +130,37 @@
     }
     .vcmd:hover { background: rgba(59,130,246,.3); }
     .vcmd:active { transform: scale(.95); }
+    .vcmd-wake { background: rgba(168,85,247,.18); border-color: rgba(168,85,247,.45); color: var(--purple); font-weight: 700; }
+    .vcmd-wake:hover { background: rgba(168,85,247,.32); }
+    .voice-dormant .vp-dot { background: var(--text-muted); animation: none; opacity: .4; }
+    .voice-active .vp-dot { background: var(--green); }
+    .confirm-banner {
+      position: fixed; top: 60px; left: 50%; transform: translateX(-50%); z-index: 3000;
+      background: #252535; border: 2px solid var(--orange); border-radius: 10px;
+      padding: 12px 22px; font-size: 13px; display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 8px 28px rgba(0,0,0,.5); animation: pop-in .2s ease;
+    }
+    .confirm-yes { padding: 5px 14px; background: var(--green); border: none; border-radius: 6px; color: #fff; font-weight: 700; cursor: pointer; }
+    .confirm-no  { padding: 5px 14px; background: rgba(255,255,255,.1); border: none; border-radius: 6px; color: var(--text-secondary); cursor: pointer; }
     .vp-hint { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+    .vp-transcript {
+      font-size: 12px; color: var(--text-primary);
+      background: rgba(0,0,0,.3); border-radius: 6px; padding: 3px 10px;
+      min-width: 150px; max-width: 220px; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; border: 1px solid var(--border);
+    }
+    .vp-transcript.interim { color: var(--text-muted); font-style: italic; }
+    .vp-transcript.recognized { color: var(--green); border-color: rgba(34,197,94,.4); }
+    .mic-real-btn {
+      width: 34px; height: 34px; border-radius: 50%; border: none; cursor: pointer;
+      font-size: 17px; display: flex; align-items: center; justify-content: center;
+      transition: all .2s; background: rgba(59,130,246,.2); color: var(--blue);
+      flex-shrink: 0; outline: none;
+    }
+    .mic-real-btn.listening { background: var(--red); color: #fff; animation: mic-pulse 1s infinite; box-shadow: 0 0 12px rgba(239,68,68,.5); }
+    .mic-real-btn:hover:not(.listening) { background: rgba(59,130,246,.35); }
+    @keyframes mic-pulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.12) } }
+    .no-stt-warn { font-size: 11px; color: var(--orange); padding: 3px 10px; background: var(--orange-dim); border-radius: 5px; }
 
     /* ── ORDER GRID ─────────────────────────── */
     .orders-area {
@@ -481,16 +511,22 @@
     <span class="filter-count" id="std-count"></span>
   </div>
   <div class="voice-panel" id="std-voice-panel">
-    <div class="vp-status"><div class="vp-dot"></div>語音監聽中</div>
+    <button class="mic-real-btn" id="std-mic-btn" onclick="toggleListening()" title="點擊開始/停止收音">🎙️</button>
+    <div class="vp-status"><div class="vp-dot"></div><span id="std-voice-status">說「OK KDS」啟動</span></div>
+    <span class="vp-transcript" id="std-transcript">—</span>
     <div class="vp-cmds">
-      <button class="vcmd" onclick="voiceCmd('出餐','standard')">「出餐」</button>
-      <button class="vcmd" onclick="voiceCmd('完成','standard')">「完成」</button>
-      <button class="vcmd" onclick="voiceCmd('外送','standard')">「外送」</button>
-      <button class="vcmd" onclick="voiceCmd('內用','standard')">「內用」</button>
-      <button class="vcmd" onclick="voiceCmd('外帶','standard')">「外帶」</button>
-      <button class="vcmd" onclick="voiceCmd('叫號','standard')">「叫號」</button>
+      <button class="vcmd vcmd-wake" onclick="processVoiceCommand('OK KDS')">「OK KDS」</button>
+      <button class="vcmd" onclick="processVoiceCommand('完成001')">「完成001」</button>
+      <button class="vcmd" onclick="processVoiceCommand('全部出餐001')">「全部出餐001」</button>
+      <button class="vcmd" onclick="processVoiceCommand('叫號001')">「叫號001」</button>
+      <button class="vcmd" onclick="processVoiceCommand('催菜001拿鐵')">「催菜001拿鐵」</button>
+      <button class="vcmd" onclick="processVoiceCommand('找回')">「找回」</button>
+      <button class="vcmd" onclick="processVoiceCommand('展開001')">「展開001」</button>
+      <button class="vcmd" onclick="processVoiceCommand('切換外送')">「切換外送」</button>
+      <button class="vcmd" onclick="processVoiceCommand('下一頁')">「下一頁」</button>
+      <button class="vcmd" onclick="processVoiceCommand('拿鐵賣完了')">「拿鐵賣完了」</button>
     </div>
-    <span class="vp-hint">點擊模擬語音指令</span>
+    <span class="vp-hint">真實麥克風收音 或 點按鈕模擬</span>
   </div>
   <div class="orders-area" id="std-orders"></div>
   <div class="btoolbar">
@@ -514,14 +550,22 @@
     <span class="filter-count" id="sum-count"></span>
   </div>
   <div class="voice-panel" id="sum-voice-panel">
-    <div class="vp-status"><div class="vp-dot"></div>語音監聽中</div>
+    <button class="mic-real-btn" id="sum-mic-btn" onclick="toggleListening()" title="點擊開始/停止收音">🎙️</button>
+    <div class="vp-status"><div class="vp-dot"></div><span id="sum-voice-status">說「OK KDS」啟動</span></div>
+    <span class="vp-transcript" id="sum-transcript">—</span>
     <div class="vp-cmds">
-      <button class="vcmd" onclick="voiceCmd('全完成','summary')">「全完成」</button>
-      <button class="vcmd" onclick="voiceCmd('外送','summary')">「外送」</button>
-      <button class="vcmd" onclick="voiceCmd('拿鐵幾份','summary')">「拿鐵幾份」</button>
-      <button class="vcmd" onclick="voiceCmd('煎台','summary')">「煎台」</button>
+      <button class="vcmd vcmd-wake" onclick="processVoiceCommand('OK KDS')">「OK KDS」</button>
+      <button class="vcmd" onclick="processVoiceCommand('製作中拿鐵')">「製作中拿鐵」</button>
+      <button class="vcmd" onclick="processVoiceCommand('完成拿鐵')">「完成拿鐵」</button>
+      <button class="vcmd" onclick="processVoiceCommand('完成拿鐵3份')">「完成拿鐵3份」</button>
+      <button class="vcmd" onclick="processVoiceCommand('未做拿鐵')">「未做拿鐵」</button>
+      <button class="vcmd" onclick="processVoiceCommand('拿鐵賣完了')">「拿鐵賣完了」</button>
+      <button class="vcmd" onclick="processVoiceCommand('還剩多少拿鐵')">「還剩多少拿鐵」</button>
+      <button class="vcmd" onclick="processVoiceCommand('切換煎台')">「切換煎台」</button>
+      <button class="vcmd" onclick="processVoiceCommand('切換外送')">「切換外送」</button>
+      <button class="vcmd" onclick="processVoiceCommand('下一頁')">「下一頁」</button>
     </div>
-    <span class="vp-hint">點擊模擬語音指令</span>
+    <span class="vp-hint">真實麥克風收音 或 點按鈕模擬</span>
   </div>
   <div class="summary-area" id="sum-area"></div>
   <div class="btoolbar">
@@ -932,6 +976,9 @@
 <!-- TOAST CONTAINER -->
 <div id="toasts"></div>
 
+<!-- VOICE CONFIRM BANNER -->
+<div id="confirmBanner" style="display:none"></div>
+
 <script>
 // ═══════════ STATE ═══════════
 const state = {
@@ -1096,14 +1143,16 @@ function advanceOrder(id) {
       return;
     }
     o.status = 'ready';
-    toast(`🍽️ 訂單 #${o.id} 已出餐！${state.voiceOn ? ' 語音：叫號播放中...' : ''}`, 'ok');
-    if (state.voiceOn) setTimeout(()=>toast('📢 CDS 叫號已觸發', 'voice'), 600);
+    toast(`🍽️ 訂單 #${o.id} 已出餐！${state.voiceOn ? ' CDS 叫號觸發中...' : ''}`, 'ok');
+    speak(`訂單 ${o.id} 出餐，叫號請注意`);
+    if (state.voiceOn) setTimeout(()=>toast('📢 CDS 叫號已觸發', 'voice'), 700);
   } else if (o.status === 'ready') {
     o.status = 'served';
     state.completedOrders.unshift({...o, completedAt: new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})});
     state.orders = state.orders.filter(x=>x.id!==id);
     updateCpCount();
     toast(`✅ 訂單 #${id} 已取餐，自動消單`, 'ok');
+    speak(`訂單 ${id} 已取餐，消單`);
   }
   renderStandard();
 }
@@ -1114,8 +1163,8 @@ function advanceItem(event, itemId) {
   for (const o of state.orders) {
     const item = o.items.find(i=>i.id===id);
     if (item) {
-      if (item.status === 'todo') { item.status = 'doing'; toast(`🔵 品項「${item.name}」→ 已做`, ''); }
-      else if (item.status === 'doing') { item.status = 'done'; toast(`✅ 品項「${item.name}」→ 完成`, 'ok'); }
+      if (item.status === 'todo') { item.status = 'doing'; toast(`🔵 品項「${item.name}」→ 已做`, ''); speak(`${item.name}，已做`); }
+      else if (item.status === 'doing') { item.status = 'done'; toast(`✅ 品項「${item.name}」→ 完成`, 'ok'); speak(`${item.name}，完成`); }
       else { toast('品項已完成，長按可回退', ''); }
       break;
     }
@@ -1219,7 +1268,367 @@ function batchComplete(idx) {
 
 function closeCtx() { document.getElementById('ctxModal').classList.remove('show'); }
 
-// ═══════════ VOICE ═══════════
+// ═══════════ STT / TTS ═══════════
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let isListening = false;
+// 語音狀態機
+let voiceState = 'dormant'; // dormant | ready | confirming
+let failureCount = 0;
+const MAX_FAILURES = 3;
+let pendingConfirm = null;   // { fn, label } 等待低信心值確認
+let touchLock = null;        // 觸控/語音衝突鎖定
+
+function speak(text) {
+  if (!state.voiceOn || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'zh-TW';
+  u.rate = 1.05;
+  u.pitch = 1;
+  // 優先選中文聲音
+  const voices = window.speechSynthesis.getVoices();
+  const zhVoice = voices.find(v => v.lang.startsWith('zh'));
+  if (zhVoice) u.voice = zhVoice;
+  window.speechSynthesis.speak(u);
+}
+
+function initSTT() {
+  if (!SpeechRecognition) return null;
+  const r = new SpeechRecognition();
+  r.lang = 'zh-TW';
+  r.continuous = true;
+  r.interimResults = true;
+  r.maxAlternatives = 1;
+
+  r.onresult = (event) => {
+    let interim = '', final = '';
+    let confidence = 1.0;
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const t = event.results[i][0].transcript;
+      if (event.results[i].isFinal) { final += t; confidence = event.results[i][0].confidence || 1.0; }
+      else interim += t;
+    }
+    const current = final || interim;
+    const isFinal = !!final;
+    updateTranscriptUI(current, isFinal);
+    if (isFinal && current.trim()) processVoiceCommand(current.trim(), confidence);
+  };
+
+  r.onerror = (e) => {
+    if (e.error === 'no-speech') return;
+    if (e.error === 'not-allowed') {
+      const msg = '麥克風無信號，語音功能已停用';
+      toast(`❌ ${msg}`, 'err'); speak(msg); stopListening(); return;
+    }
+    if (e.error === 'network') {
+      const msg = '執行失敗，請重試或改用觸控';
+      toast(`❌ ${msg}`, 'err'); speak(msg); return;
+    }
+    if (e.error === 'service-not-allowed' || e.error === 'aborted') {
+      const msg = '語音服務暫時無法使用，請改用觸控操作';
+      toast(`⚠️ ${msg}`, 'warn'); speak(msg); stopListening(); return;
+    }
+    toast(`語音辨識錯誤：${e.error}`, 'warn');
+  };
+
+  r.onend = () => {
+    if (isListening) {
+      try { r.start(); } catch(e) {}
+    } else {
+      setMicUI(false);
+    }
+  };
+  return r;
+}
+
+function toggleListening() {
+  if (!SpeechRecognition) {
+    toast('⚠️ 您的瀏覽器不支援語音辨識，請使用 Chrome 或 Edge', 'warn');
+    speak('您的瀏覽器不支援語音辨識');
+    return;
+  }
+  if (isListening) stopListening();
+  else startListening();
+}
+
+function startListening() {
+  if (!recognition) recognition = initSTT();
+  if (!recognition) return;
+  try {
+    recognition.start();
+    isListening = true;
+    setMicUI(true);
+    updateTranscriptUI('正在聆聽...', false);
+    toast('🎙️ 開始收音，請說指令', 'voice');
+    speak('開始收音');
+  } catch(e) {
+    toast('語音辨識啟動失敗，請重試', 'warn');
+  }
+}
+
+function stopListening() {
+  isListening = false;
+  if (recognition) try { recognition.stop(); } catch(e) {}
+  setMicUI(false);
+  updateTranscriptUI('—', false);
+  toast('🔇 停止收音', '');
+}
+
+function setMicUI(on) {
+  ['std-mic-btn','sum-mic-btn'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.className = 'mic-real-btn' + (on ? ' listening' : '');
+  });
+  ['std-voice-status','sum-voice-status'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = on ? '收音中，請說指令...' : '待機中，點麥克風開說';
+  });
+}
+
+function updateTranscriptUI(text, isFinal) {
+  ['std-transcript','sum-transcript'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text || '—';
+    el.className = 'vp-transcript' + (isFinal ? ' recognized' : text && text !== '—' ? ' interim' : '');
+  });
+}
+
+// ── 語音指令主入口（依 KDS 2.0 語音規格表） ──────────────────
+function processVoiceCommand(raw, confidence) {
+  if (confidence === undefined) confidence = 1.0;
+  const mode = state.mode;
+  updateTranscriptUI(raw, true);
+  toast(`🎙️ 辨識：「${raw}」`, 'voice');
+
+  // 1. 喚醒詞 OK KDS
+  if (/ok\s*kds/i.test(raw)) {
+    voiceState = 'ready'; failureCount = 0;
+    setVoiceStateUI('ready');
+    speak('KDS 語音就緒，請說指令');
+    toast('🟢 KDS 語音就緒', 'voice');
+    return;
+  }
+
+  // 2. 低信心值確認中
+  if (voiceState === 'confirming' && pendingConfirm) {
+    if (/是|對|確認|好/.test(raw)) {
+      const fn = pendingConfirm.fn; pendingConfirm = null;
+      voiceState = 'ready'; hideConfirmBanner(); fn();
+    } else {
+      pendingConfirm = null; voiceState = 'ready';
+      hideConfirmBanner(); speak('已取消'); toast('語音指令已取消', '');
+    }
+    return;
+  }
+
+  // 3. 待命 → 需先說 OK KDS
+  if (voiceState === 'dormant') {
+    speak('請先說 OK KDS 啟動語音功能');
+    toast('💤 請先說「OK KDS」啟動', 'warn'); return;
+  }
+
+  // 4. 低信心值 → 請確認
+  if (confidence < 0.65) {
+    voiceState = 'confirming';
+    pendingConfirm = { fn: () => processVoiceCommandExec(raw, mode) };
+    speak(`請確認，${raw}`);
+    showConfirmBanner(raw); return;
+  }
+
+  processVoiceCommandExec(raw, mode);
+}
+
+function processVoiceCommandExec(raw, mode) {
+  let matched = false;
+
+  // 解析訂單號碼（1-3位數）
+  const orderMatch = raw.match(/(\d{1,3})/);
+  const orderNum = orderMatch ? orderMatch[1].padStart(3,'0') : null;
+
+  // 解析份數
+  const qtyMatch = raw.match(/(\d+)\s*份/);
+  const qty = qtyMatch ? parseInt(qtyMatch[1]) : 1;
+
+  // 解析品項名（去掉動詞 + 數字）
+  const itemName = raw.replace(/完成|製作中|未做|催菜|賣完了|售完|還剩多少|還有幾份|幾份|展開|切換|全部出餐|叫號|\d+份|\d{1,3}/g,'').trim();
+
+  // ── 訂單流程（標準模式）────────────────────────────
+  // 完成{單號} / {單號}好了 → 出餐 + 叫號
+  if ((/^完成\d/.test(raw) || /\d好了/.test(raw) || /\d完成/.test(raw)) && orderNum) {
+    matched = true;
+    const o = state.orders.find(x => x.id === orderNum);
+    if (!o) return voiceErr(`找不到訂單 #${orderNum}，請確認單號`);
+    const notDone = o.items.filter(i => i.status !== 'done').length;
+    if (notDone > 0) return voiceErr(`#${orderNum} 尚有品項未完成，無法出餐`);
+    advanceOrder(orderNum);
+    speak(`訂單 ${orderNum} 出餐，叫號請注意`);
+  }
+
+  // 全部出餐{單號} → 強制出餐（跳過品項確認）
+  else if (/全部出餐/.test(raw) && orderNum) {
+    matched = true;
+    const o = state.orders.find(x => x.id === orderNum);
+    if (!o) return voiceErr(`找不到訂單 #${orderNum}，請確認單號`);
+    forceComplete(orderNum);
+    speak(`訂單 ${orderNum} 全部出餐，叫號請注意`);
+  }
+
+  // 叫號{單號}
+  else if (/^叫號/.test(raw) && orderNum) {
+    matched = true;
+    const o = state.orders.find(x => x.id === orderNum);
+    if (!o) return voiceErr(`找不到訂單 #${orderNum}，請確認單號`);
+    toast(`📢 訂單 #${orderNum} 叫號，CDS 播放中`, 'ok');
+    speak(`訂單 ${orderNum} 叫號`);
+  }
+
+  // 催菜{單號}{品項}
+  else if (/催菜/.test(raw)) {
+    matched = true;
+    const urge = itemName || '指定品項';
+    toast(`🔴 催菜：訂單 #${orderNum||'?'} 的「${urge}」已標示催菜，總表優先顯示`, 'warn');
+    speak(`催菜，${urge}`);
+    const si = state.summaryItems.find(x => x.name.includes(urge));
+    if (si) { si.urge = true; renderSummary(); }
+  }
+
+  // 找回 / 上一單
+  else if (/找回|上一單/.test(raw)) {
+    matched = true;
+    if (state.completedOrders.length === 0) return voiceErr('沒有可找回的訂單');
+    const last = state.completedOrders[0];
+    restoreOrder(last.id);
+    speak(`訂單 ${last.id} 已找回`);
+  }
+
+  // ── 品項流程（總表/標準）────────────────────────────
+  // 未做{品項}
+  else if (/^未做/.test(raw) && itemName) {
+    matched = true;
+    const si = state.summaryItems.find(x => x.name.includes(itemName));
+    if (!si) return voiceErr(`找不到品項 ${itemName}，請確認`);
+    if (si.done > 0) { si.done = Math.max(0, si.done-1); renderSummary(); speak(`${si.name}，回退為未做`); }
+    else voiceErr(`${si.name} 已是未做狀態`);
+  }
+
+  // 製作中{品項}（含份數）
+  else if (/^製作中/.test(raw) && itemName) {
+    matched = true;
+    const si = state.summaryItems.find(x => x.name.includes(itemName));
+    if (!si) return voiceErr(`找不到品項 ${itemName}，請確認`);
+    const add = Math.min(qty, si.total - si.done);
+    if (add <= 0) return voiceErr(`${si.name} 已全部完成`);
+    si.done = Math.min(si.total, si.done + add);
+    renderSummary();
+    speak(qty > 1 ? `${si.name} ${add} 份，FIFO 切換製作中` : `${si.name}，製作中`);
+  }
+
+  // 完成{品項}（含份數）
+  else if (/^完成[\u4e00-\u9fff]/.test(raw) && itemName) {
+    matched = true;
+    const si = state.summaryItems.find(x => x.name.includes(itemName));
+    if (!si) return voiceErr(`找不到品項 ${itemName}，請確認`);
+    const add = Math.min(qty, si.total - si.done);
+    if (add <= 0) return voiceErr(`${si.name} 已全部完成`);
+    si.done = Math.min(si.total, si.done + add);
+    renderSummary();
+    speak(qty > 1 ? `${si.name} ${add} 份完成，FIFO 標記` : `${si.name}，完成`);
+  }
+
+  // ── 螢幕導航────────────────────────────
+  // 下一頁
+  else if (/下一頁/.test(raw)) {
+    matched = true;
+    toast('▶ 翻到下一組訂單畫面（Prototype 示意）', '');
+    speak('下一頁');
+  }
+
+  // 展開{單號}
+  else if (/展開/.test(raw) && orderNum) {
+    matched = true;
+    toast(`📄 訂單 #${orderNum} 展開備註細節`, 'ok');
+    speak(`展開訂單 ${orderNum}`);
+  }
+
+  // 切換{站別} / 切換{服務類型}
+  else if (/切換/.test(raw)) {
+    matched = true;
+    const target = raw.replace(/切換/g,'').trim();
+    const svcMap = { '外送':'delivery', '內用':'dine-in', '外帶':'takeout' };
+    if (svcMap[target]) {
+      const f = svcMap[target];
+      if (mode === 'standard') { state.stdFilter = state.stdFilter===f?null:f; document.querySelectorAll('#view-standard .fbtn').forEach(b=>b.classList.toggle('on', b.dataset.f===state.stdFilter)); renderStandard(); }
+      else { state.sumFilter = state.sumFilter===f?null:f; document.querySelectorAll('#view-summary .fbtn').forEach(b=>b.classList.toggle('on', b.dataset.f===state.sumFilter)); renderSummary(); }
+      speak(`切換${target}`);
+    } else {
+      toast(`🔀 站別切換：${target}（需 Portal 設定）`, 'warn');
+      speak(`切換 ${target}`);
+    }
+  }
+
+  // ── 智慧備料────────────────────────────
+  // {品項}賣完了 / 售完
+  else if (/賣完了|售完/.test(raw) && itemName) {
+    matched = true;
+    toast(`🚫 「${itemName}」已標示售完，POS & KDS 同步`, 'warn');
+    speak(`${itemName} 標示售完，已同步 POS`);
+  }
+
+  // 還剩多少{品項} / {品項}幾份
+  else if ((/還剩多少|還有幾份|幾份|多少份/.test(raw)) && itemName) {
+    matched = true;
+    const si = state.summaryItems.find(x => x.name.includes(itemName));
+    if (!si) return voiceErr(`找不到品項 ${itemName}`);
+    const remain = si.total - si.done;
+    toast(`📊 ${si.name}：已做 ${si.done}/${si.total} 份，還剩 ${remain} 份`, 'ok');
+    speak(`${si.name}，已做 ${si.done} 份，還剩 ${remain} 份，需補 ${remain} 份`);
+  }
+
+  // ── 兜底錯誤處理────────────────────────────
+  if (!matched) {
+    failureCount++;
+    if (failureCount >= MAX_FAILURES) {
+      speak('語音辨識持續失敗，建議改用觸控操作');
+      toast('⚠️ 語音辨識持續失敗，建議改用觸控操作', 'warn');
+      failureCount = 0; voiceState = 'dormant'; setVoiceStateUI('dormant');
+    } else {
+      speak('抱歉，聽不懂您的意思');
+      toast(`❓ 聽不懂：「${raw}」（${failureCount}/${MAX_FAILURES} 次失敗）`, '');
+    }
+  } else {
+    failureCount = 0;
+  }
+}
+
+// ── 語音輔助工具函式 ────────────────────────────────
+function voiceOK(msg) { speak(msg); }
+function voiceErr(msg) { speak(msg); toast(`⚠️ ${msg}`, 'warn'); }
+
+function setVoiceStateUI(s) {
+  document.querySelectorAll('.voice-panel').forEach(p => {
+    p.classList.remove('voice-dormant','voice-active');
+    p.classList.add(s === 'ready' ? 'voice-active' : 'voice-dormant');
+  });
+  ['std-voice-status','sum-voice-status'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = s === 'ready' ? '就緒，請說指令' : s === 'confirming' ? '請確認...' : '說「OK KDS」啟動';
+  });
+}
+
+function showConfirmBanner(label) {
+  const b = document.getElementById('confirmBanner');
+  b.style.display = 'flex';
+  b.className = 'confirm-banner';
+  b.innerHTML = `<span>⚠️ 確認執行：「${label}」？</span>
+    <button class="confirm-yes" onclick="processVoiceCommand('是')">是，確認</button>
+    <button class="confirm-no"  onclick="processVoiceCommand('不是')">取消</button>`;
+  setTimeout(() => { if (pendingConfirm) { hideConfirmBanner(); voiceState='ready'; pendingConfirm=null; } }, 8000);
+}
+function hideConfirmBanner() { document.getElementById('confirmBanner').style.display='none'; }
+
+// ═══════════ VOICE TOGGLE ═══════════
 function toggleVoice() {
   state.voiceOn = document.getElementById('voiceToggle').checked;
   const wrap = document.getElementById('voiceWrap');
@@ -1231,34 +1640,25 @@ function toggleVoice() {
   badge.className = 'mode-badge' + (state.voiceOn ? ' voice-on' : '');
   stdPanel.className = 'voice-panel' + (state.voiceOn ? ' show' : '');
   sumPanel.className = 'voice-panel' + (state.voiceOn ? ' show' : '');
-  toast(state.voiceOn ? '🎙️ 語音輔助已開啟，開始監聽指令' : '🔇 語音輔助已關閉', state.voiceOn ? 'voice' : '');
+
+  if (!state.voiceOn) {
+    stopListening(); voiceState = 'dormant'; setVoiceStateUI('dormant');
+    hideConfirmBanner(); failureCount = 0; pendingConfirm = null;
+    toast('🔇 語音輔助已關閉', '');
+  } else {
+    voiceState = 'dormant'; setVoiceStateUI('dormant');
+    if (!SpeechRecognition) {
+      toast('⚠️ 瀏覽器不支援語音辨識（請用 Chrome）。模擬按鈕仍可使用', 'warn');
+    } else {
+      toast('🎙️ 語音輔助已開啟，點麥克風後說「OK KDS」啟動', 'voice');
+      speak('語音輔助已開啟，說 OK KDS 啟動');
+    }
+  }
 }
 
-function voiceCmd(cmd, mode) {
-  toast(`🎙️ 語音指令：「${cmd}」`, 'voice');
-  if (cmd === '出餐' && mode === 'standard') {
-    const o = state.orders.find(x=>x.status==='making' && x.items.filter(i=>i.status==='done').length===x.items.length);
-    if (o) { advanceOrder(o.id); }
-    else toast('⚠️ 目前沒有可出餐的訂單', 'warn');
-  } else if (cmd === '完成' && mode === 'standard') {
-    const o = state.orders.find(x=>x.status==='ready');
-    if (o) { advanceOrder(o.id); }
-    else toast('⚠️ 沒有出餐中的訂單', 'warn');
-  } else if (cmd === '叫號') {
-    toast('📢 CDS 叫號觸發（語音）', 'ok');
-  } else if (cmd === '全完成' && mode === 'summary') {
-    toast('⚠️ 批量完成需二次確認，請再說「確認」', 'warn');
-  } else if (cmd === '拿鐵幾份' && mode === 'summary') {
-    const it = state.summaryItems.find(x=>x.name.includes('拿鐵'));
-    if (it) toast(`📊 拿鐵咖啡：已做 ${it.done}/${it.total} 份，剩餘 ${it.total-it.done} 份`, 'ok');
-  } else if (['外送','內用','外帶'].includes(cmd)) {
-    const map = {'外送':'delivery','內用':'dine-in','外帶':'takeout'};
-    if (mode==='standard') { state.stdFilter = map[cmd]; document.querySelectorAll('#view-standard .fbtn').forEach(b=>b.classList.toggle('on', b.dataset.f===map[cmd])); renderStandard(); }
-    else { state.sumFilter = map[cmd]; renderSummary(); }
-    toast(`🔍 篩選：${cmd}`, '');
-  } else if (cmd === '煎台') {
-    toast('🔀 分站切換：煎台（需 Portal 設定站台代碼）', 'warn');
-  }
+// 等瀏覽器載入聲音清單
+if (window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 }
 
 // ═══════════ FILTER ═══════════
