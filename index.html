@@ -114,53 +114,54 @@
     .fbtn[data-f="fp"].on { border-color: var(--fp); background: var(--yellow-dim); }
     .filter-count { margin-left: auto; font-size: 12px; color: var(--text-muted); }
 
-    /* ── VOICE PANEL ─────────────────────────── */
-    .voice-panel {
-      background: var(--blue-dim); border-bottom: 1px solid rgba(59,130,246,.25);
-      padding: 8px 20px; display: none; align-items: center; gap: 10px; flex-shrink: 0;
+    /* ── BOTTOM VOICE BAR（固定底部語音列）─────────────────── */
+    .voice-bottom-bar {
+      display: none; flex-shrink: 0;
+      background: #161625; border-top: 1px solid rgba(59,130,246,.3);
+      padding: 8px 16px; align-items: center; gap: 10px;
     }
+    .voice-bottom-bar.show { display: flex; }
+    .vbb-mic { width: 34px; height: 34px; border-radius: 50%; border: none; cursor: pointer; font-size: 17px; display: flex; align-items: center; justify-content: center; transition: all .2s; background: rgba(59,130,246,.2); color: var(--blue); flex-shrink: 0; outline: none; }
+    .vbb-mic.listening { background: var(--red); color: #fff; animation: mic-pulse 1s infinite; box-shadow: 0 0 12px rgba(239,68,68,.5); }
+    .vbb-mic:hover:not(.listening) { background: rgba(59,130,246,.35); }
+    @keyframes mic-pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+    .vbb-status-wrap { display: flex; flex-direction: column; gap: 2px; min-width: 120px; flex-shrink: 0; }
+    .vbb-status { font-size: 11px; color: var(--blue); font-weight: 600; }
+    .vbb-status.dormant { color: var(--text-muted); }
+    .vbb-transcript { font-size: 12px; color: var(--text-secondary); background: rgba(0,0,0,.3); border-radius: 5px; padding: 2px 8px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 1px solid var(--border); }
+    .vbb-transcript.interim { color: var(--text-muted); font-style: italic; }
+    .vbb-transcript.recognized { color: var(--green); border-color: rgba(34,197,94,.4); }
+    .vbb-shortcuts { display: flex; gap: 4px; flex-wrap: nowrap; overflow-x: auto; flex: 1; }
+    .vbb-shortcuts::-webkit-scrollbar { height: 0; }
+    .vcmd { padding: 3px 9px; background: rgba(59,130,246,.12); border: 1px solid rgba(59,130,246,.3); border-radius: 9px; color: var(--blue); font-size: 11px; cursor: pointer; transition: all .15s; white-space: nowrap; }
+    .vcmd:hover { background: rgba(59,130,246,.25); }
+    .vcmd:active { transform: scale(.95); }
+    .vcmd-wake { background: rgba(168,85,247,.15); border-color: rgba(168,85,247,.4); color: var(--purple); font-weight: 700; }
+    .vcmd-wake:hover { background: rgba(168,85,247,.28); }
+    .vbb-history { display: flex; align-items: center; gap: 5px; flex-shrink: 0; border-left: 1px solid var(--border); padding-left: 10px; }
+    .vbb-hist-label { font-size: 10px; color: var(--text-muted); white-space: nowrap; }
+    .vbb-hist-item { font-size: 11px; padding: 2px 7px; border-radius: 6px; background: rgba(255,255,255,.05); color: var(--text-secondary); white-space: nowrap; }
+    .vbb-hist-item.ok { color: var(--green); }
+    .vbb-hist-item.err { color: var(--red); }
+    /* Summary mode voice panel (keeps top panel style) */
+    .voice-panel { background: var(--blue-dim); border-bottom: 1px solid rgba(59,130,246,.25); padding: 8px 20px; display: none; align-items: center; gap: 10px; flex-shrink: 0; }
     .voice-panel.show { display: flex; }
     .vp-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--blue); white-space: nowrap; }
     .vp-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); animation: blink 1.2s infinite; }
-    @keyframes blink { 0%,100% { opacity:1 } 50% { opacity:.25 } }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
     .vp-cmds { display: flex; gap: 5px; flex-wrap: wrap; flex: 1; }
-    .vcmd {
-      padding: 3px 10px; background: rgba(59,130,246,.15); border: 1px solid rgba(59,130,246,.35);
-      border-radius: 10px; color: var(--blue); font-size: 12px; cursor: pointer; transition: all .15s;
-    }
-    .vcmd:hover { background: rgba(59,130,246,.3); }
-    .vcmd:active { transform: scale(.95); }
-    .vcmd-wake { background: rgba(168,85,247,.18); border-color: rgba(168,85,247,.45); color: var(--purple); font-weight: 700; }
-    .vcmd-wake:hover { background: rgba(168,85,247,.32); }
-    .voice-dormant .vp-dot { background: var(--text-muted); animation: none; opacity: .4; }
-    .voice-active .vp-dot { background: var(--green); }
-    .confirm-banner {
-      position: fixed; top: 60px; left: 50%; transform: translateX(-50%); z-index: 3000;
-      background: #252535; border: 2px solid var(--orange); border-radius: 10px;
-      padding: 12px 22px; font-size: 13px; display: flex; align-items: center; gap: 12px;
-      box-shadow: 0 8px 28px rgba(0,0,0,.5); animation: pop-in .2s ease;
-    }
-    .confirm-yes { padding: 5px 14px; background: var(--green); border: none; border-radius: 6px; color: #fff; font-weight: 700; cursor: pointer; }
-    .confirm-no  { padding: 5px 14px; background: rgba(255,255,255,.1); border: none; border-radius: 6px; color: var(--text-secondary); cursor: pointer; }
     .vp-hint { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
-    .vp-transcript {
-      font-size: 12px; color: var(--text-primary);
-      background: rgba(0,0,0,.3); border-radius: 6px; padding: 3px 10px;
-      min-width: 150px; max-width: 220px; white-space: nowrap;
-      overflow: hidden; text-overflow: ellipsis; border: 1px solid var(--border);
-    }
+    .vp-transcript { font-size: 12px; color: var(--text-primary); background: rgba(0,0,0,.3); border-radius: 6px; padding: 3px 10px; min-width: 150px; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 1px solid var(--border); }
     .vp-transcript.interim { color: var(--text-muted); font-style: italic; }
     .vp-transcript.recognized { color: var(--green); border-color: rgba(34,197,94,.4); }
-    .mic-real-btn {
-      width: 34px; height: 34px; border-radius: 50%; border: none; cursor: pointer;
-      font-size: 17px; display: flex; align-items: center; justify-content: center;
-      transition: all .2s; background: rgba(59,130,246,.2); color: var(--blue);
-      flex-shrink: 0; outline: none;
-    }
+    .mic-real-btn { width: 34px; height: 34px; border-radius: 50%; border: none; cursor: pointer; font-size: 17px; display: flex; align-items: center; justify-content: center; transition: all .2s; background: rgba(59,130,246,.2); color: var(--blue); flex-shrink: 0; outline: none; }
     .mic-real-btn.listening { background: var(--red); color: #fff; animation: mic-pulse 1s infinite; box-shadow: 0 0 12px rgba(239,68,68,.5); }
     .mic-real-btn:hover:not(.listening) { background: rgba(59,130,246,.35); }
-    @keyframes mic-pulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.12) } }
-    .no-stt-warn { font-size: 11px; color: var(--orange); padding: 3px 10px; background: var(--orange-dim); border-radius: 5px; }
+    .voice-dormant .vp-dot { background: var(--text-muted); animation: none; opacity:.4; }
+    .voice-active .vp-dot { background: var(--green); }
+    .confirm-banner { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); z-index: 3000; background: #252535; border: 2px solid var(--orange); border-radius: 10px; padding: 12px 22px; font-size: 13px; display: flex; align-items: center; gap: 12px; box-shadow: 0 8px 28px rgba(0,0,0,.5); animation: pop-in .2s ease; }
+    .confirm-yes { padding: 5px 14px; background: var(--green); border: none; border-radius: 6px; color: #fff; font-weight: 700; cursor: pointer; }
+    .confirm-no  { padding: 5px 14px; background: rgba(255,255,255,.1); border: none; border-radius: 6px; color: var(--text-secondary); cursor: pointer; }
 
     /* ── ORDER GRID ─────────────────────────── */
     .orders-area {
@@ -187,7 +188,8 @@
     .order-card.delay-urgent { border-color: var(--red); box-shadow: 0 0 14px rgba(239,68,68,.5); animation: urgpulse 1s infinite; }
     @keyframes urgpulse { 0%,100%{box-shadow:0 0 14px rgba(239,68,68,.5)} 50%{box-shadow:0 0 22px rgba(239,68,68,.8)} }
 
-    .card-head { padding: 9px 10px 7px 14px; display: flex; align-items: center; gap: 7px; }
+    /* ── REDESIGNED CARD ─────────────────────────── */
+    .card-head { padding: 10px 12px 0 14px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .svc-badge {
       padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 800; letter-spacing: .4px; flex-shrink: 0;
     }
@@ -204,9 +206,12 @@
     }
     .order-prog.done-all { background: var(--green-dim); color: var(--green); }
 
-    .card-meta { padding: 0 10px 5px 14px; font-size: 11px; color: var(--text-muted); display: flex; gap: 10px; }
+    .card-table { font-size: 11px; color: var(--text-secondary); }
+    .card-time-elapsed { font-size: 11px; color: var(--text-muted); margin-left: auto; display: flex; gap: 6px; align-items: center; }
+    .card-divider { height: 1px; background: var(--border); margin: 6px 14px 0; }
+    .card-meta { padding: 4px 12px 0 14px; font-size: 11px; color: var(--text-muted); display: flex; gap: 10px; }
 
-    .items-list { padding: 0 10px 6px 14px; flex: 1; }
+    .items-list { padding: 4px 10px 6px 14px; flex: 1; }
     .item-row {
       display: flex; align-items: center; gap: 7px; padding: 5px 4px;
       border-bottom: 1px solid var(--border); cursor: pointer;
@@ -233,25 +238,25 @@
 
     .card-note { padding: 2px 10px 6px 14px; font-size: 11px; color: var(--orange); line-height: 1.4; }
 
+    /* Main CTA */
+    .card-actions { padding: 6px 10px 10px; display: flex; flex-direction: column; gap: 5px; }
     .card-action {
-      margin: 6px 10px; padding: 9px 12px; border-radius: 8px; border: none; cursor: pointer;
-      font-size: 13px; font-weight: 700; transition: all .18s; text-align: center;
+      padding: 10px 12px; border-radius: 8px; border: none; cursor: pointer;
+      font-size: 13px; font-weight: 700; transition: all .18s; text-align: center; width: 100%;
     }
-    .card-action.making { background: var(--blue); color: #fff; }
+    .card-action.making { background: rgba(59,130,246,.18); color: var(--blue); border: 1.5px solid rgba(59,130,246,.4); }
+    .card-action.making.ready-to-serve { background: var(--green); color: #fff; border-color: var(--green); font-size: 14px; }
     .card-action.ready { background: var(--green); color: #fff; }
-    .card-action.served { background: rgba(255,255,255,.07); color: var(--text-muted); cursor: default; }
-    .card-action:hover:not(.served) { filter: brightness(1.12); }
-
-    .card-footer {
-      display: flex; align-items: center; padding: 0 10px 7px 14px; gap: 6px;
-    }
-    .card-footer-hint { font-size: 10px; color: var(--text-muted); flex: 1; }
-    .card-more-btn {
-      padding: 3px 8px; border-radius: 5px; border: 1px solid var(--border);
-      background: transparent; color: var(--text-muted); font-size: 11px; cursor: pointer;
-      transition: all .15s;
-    }
-    .card-more-btn:hover { background: rgba(255,255,255,.07); color: var(--text-primary); }
+    .card-action.served { background: rgba(255,255,255,.05); color: var(--text-muted); cursor: default; border: 1px solid var(--border); }
+    .card-action:hover:not(.served) { filter: brightness(1.1); transform: translateY(-1px); }
+    .card-sub-actions { display: flex; gap: 5px; }
+    .card-sub-btn { flex: 1; padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 11px; cursor: pointer; transition: all .15s; }
+    .card-sub-btn:hover { background: rgba(255,255,255,.06); color: var(--text-primary); }
+    .card-sub-btn.danger { color: var(--red); border-color: rgba(239,68,68,.25); }
+    .card-sub-btn.danger:hover { background: var(--red-dim); }
+    /* highlight when searched */
+    .order-card.highlighted { border-color: var(--yellow); box-shadow: 0 0 18px rgba(234,179,8,.45); animation: highlightpulse 1.5s 3; }
+    @keyframes highlightpulse { 0%,100%{box-shadow:0 0 8px rgba(234,179,8,.3)} 50%{box-shadow:0 0 22px rgba(234,179,8,.7)} }
 
     /* ── BOTTOM TOOLBAR ─────────────────────────── */
     .btoolbar {
@@ -501,40 +506,49 @@
 
 <!-- ═══════════════════════════ STANDARD MODE ═══════════════════════════ -->
 <div class="view active" id="view-standard">
+  <!-- Filter + toolbar row -->
   <div class="filter-bar">
-    <span class="filter-label">篩選：</span>
+    <span class="filter-label">服務類型：</span>
     <button class="fbtn" data-f="dine-in" onclick="toggleFilter(this,'standard')">內用</button>
     <button class="fbtn" data-f="takeout" onclick="toggleFilter(this,'standard')">外帶</button>
     <button class="fbtn" data-f="delivery" onclick="toggleFilter(this,'standard')">外送</button>
     <button class="fbtn" data-f="ue" onclick="toggleFilter(this,'standard')">UE</button>
     <button class="fbtn" data-f="fp" onclick="toggleFilter(this,'standard')">FP</button>
     <span class="filter-count" id="std-count"></span>
-  </div>
-  <div class="voice-panel" id="std-voice-panel">
-    <button class="mic-real-btn" id="std-mic-btn" onclick="toggleListening()" title="點擊開始/停止收音">🎙️</button>
-    <div class="vp-status"><div class="vp-dot"></div><span id="std-voice-status">說「OK KDS」啟動</span></div>
-    <span class="vp-transcript" id="std-transcript">—</span>
-    <div class="vp-cmds">
-      <button class="vcmd vcmd-wake" onclick="processVoiceCommand('OK KDS')">「OK KDS」</button>
-      <button class="vcmd" onclick="processVoiceCommand('完成001')">「完成001」</button>
-      <button class="vcmd" onclick="processVoiceCommand('全部出餐001')">「全部出餐001」</button>
-      <button class="vcmd" onclick="processVoiceCommand('叫號001')">「叫號001」</button>
-      <button class="vcmd" onclick="processVoiceCommand('催菜001拿鐵')">「催菜001拿鐵」</button>
-      <button class="vcmd" onclick="processVoiceCommand('找回')">「找回」</button>
-      <button class="vcmd" onclick="processVoiceCommand('展開001')">「展開001」</button>
-      <button class="vcmd" onclick="processVoiceCommand('切換外送')">「切換外送」</button>
-      <button class="vcmd" onclick="processVoiceCommand('下一頁')">「下一頁」</button>
-      <button class="vcmd" onclick="processVoiceCommand('拿鐵賣完了')">「拿鐵賣完了」</button>
+    <div style="margin-left:auto;display:flex;gap:5px">
+      <button class="tbtn" onclick="showCompleted()">📦 已完成 <span id="cp-count" style="background:var(--blue);color:#fff;border-radius:8px;padding:0 5px;font-size:11px;margin-left:2px">0</span></button>
+      <button class="tbtn" onclick="undoLastVoiceCmd()">↩️ 回復</button>
+      <button class="tbtn hi" onclick="switchMode('settings')">⚙️ 設定</button>
     </div>
-    <span class="vp-hint">真實麥克風收音 或 點按鈕模擬</span>
   </div>
+
+  <!-- Orders grid -->
   <div class="orders-area" id="std-orders"></div>
-  <div class="btoolbar">
-    <button class="tbtn" onclick="showCompleted()">📦 已完成 <span id="cp-count" style="background:var(--blue);color:#fff;border-radius:8px;padding:0 5px;font-size:11px;">0</span></button>
-    <button class="tbtn" onclick="toast('↩️ 已撤銷上一筆品項操作','ok')">↩️ 回復</button>
-    <button class="tbtn" onclick="toast('🔄 設定已重新整理','ok')">🔄 重整</button>
-    <button class="tbtn hi" onclick="switchMode('settings')">⚙️ 設定</button>
-    <button class="tbtn" onclick="toast('📋 訂單查詢功能','')">🔍 訂單查詢</button>
+
+  <!-- ★ 固定底部語音 Bar -->
+  <div class="voice-bottom-bar" id="std-voice-bar">
+    <button class="vbb-mic" id="std-mic-btn" onclick="toggleListening()" title="點擊開始/停止收音">🎙️</button>
+    <div class="vbb-status-wrap">
+      <div class="vbb-status dormant" id="std-voice-status">說「OK KDS」啟動語音</div>
+      <span class="vbb-transcript" id="std-transcript">—</span>
+    </div>
+    <div class="vbb-shortcuts">
+      <button class="vcmd vcmd-wake" onclick="processVoiceCommand('OK KDS')">「OK KDS」</button>
+      <button class="vcmd" onclick="processVoiceCommand('完成001')">完成001</button>
+      <button class="vcmd" onclick="processVoiceCommand('出餐001')">出餐001</button>
+      <button class="vcmd" onclick="processVoiceCommand('叫號001')">叫號001</button>
+      <button class="vcmd" onclick="processVoiceCommand('催菜001拿鐵')">催菜001拿鐵</button>
+      <button class="vcmd" onclick="processVoiceCommand('退訂單001')">退訂單001</button>
+      <button class="vcmd" onclick="processVoiceCommand('查看001')">查看001</button>
+      <button class="vcmd" onclick="processVoiceCommand('還有多少訂單製作中')">還有多少訂單</button>
+      <button class="vcmd" onclick="processVoiceCommand('切換外送')">切換外送</button>
+      <button class="vcmd" onclick="processVoiceCommand('取消動作')">取消動作</button>
+      <button class="vcmd" onclick="processVoiceCommand('停止聆聽')">停止聆聽</button>
+    </div>
+    <div class="vbb-history">
+      <span class="vbb-hist-label">最近：</span>
+      <div id="vbb-hist-list" style="display:flex;gap:4px"></div>
+    </div>
   </div>
 </div>
 
@@ -1057,28 +1071,56 @@ function renderOrderCard(o) {
   const allDone = doneCount === total;
   const delayClass = o.elapsed >= 30 ? 'delay-urgent' : o.elapsed >= 20 ? 'delay-alert' : o.elapsed >= 10 ? 'delay-warn' : '';
   const readyClass = allDone && o.status==='making' ? 'all-ready' : '';
-  const actionText = o.status==='making' ? (allDone ? '✅ 確認出餐' : '出餐') : o.status==='ready' ? '✔ 確認已取餐' : '已取餐';
-  const actionClass = o.status==='making' ? 'making' : o.status==='ready' ? 'ready' : 'served';
-  const progClass = allDone ? 'done-all' : '';
-  const metaHtml = [o.table ? `🪑 ${o.table}` : '', o.name ? `👤 ${o.name}` : '', o.phone ? `📞 ${o.phone}` : ''].filter(Boolean).join(' ');
-  const noteHtml = o.note ? `<div class="card-note">📝 ${o.note}</div>` : '';
+  const elapsedColor = o.elapsed >= 30 ? 'var(--red)' : o.elapsed >= 20 ? 'var(--orange)' : o.elapsed >= 10 ? 'var(--yellow)' : 'var(--text-muted)';
 
-  return `<div class="order-card ${delayClass} ${readyClass}" data-id="${o.id}" data-status="${o.status}">
+  // 主 CTA
+  let ctaText, ctaClass;
+  if (o.status === 'making') {
+    if (allDone) { ctaText = '🍽️ 出餐 ＋ 叫號'; ctaClass = 'making ready-to-serve'; }
+    else { ctaText = `出餐（還有 ${total - doneCount} 項未完成）`; ctaClass = 'making'; }
+  } else if (o.status === 'ready') {
+    ctaText = '✔ 確認已取餐'; ctaClass = 'ready';
+  } else {
+    ctaText = '已取餐'; ctaClass = 'served';
+  }
+
+  const progClass = allDone ? 'done-all' : '';
+  const noteHtml = o.note ? `<div class="card-note">📝 ${o.note}</div>` : '';
+  const paidIcon = `<span title="已付款" style="font-size:10px;padding:1px 5px;background:rgba(34,197,94,.15);color:var(--green);border-radius:4px;border:1px solid rgba(34,197,94,.3)">✓付</span>`;
+
+  return `<div class="order-card ${delayClass} ${readyClass}" data-id="${o.id}" data-status="${o.status}" id="card-${o.id}">
     <div class="card-head">
       <span class="svc-badge ${o.type}">${svcLabel(o.type)}</span>
       <span class="order-num">#${o.id}</span>
-      <span class="order-time">${o.time}</span>
-      <span class="order-prog ${progClass}">完成 ${doneCount}/${total}</span>
+      ${o.table ? `<span class="card-table">🪑 ${o.table}</span>` : ''}
+      ${o.name ? `<span style="font-size:10px;color:var(--text-secondary)">👤 ${o.name}</span>` : ''}
+      <div class="card-time-elapsed">
+        <span class="order-time">${o.time}</span>
+        <span style="color:${elapsedColor};font-size:11px">⏱${o.elapsed}m</span>
+        ${paidIcon}
+      </div>
     </div>
-    ${metaHtml ? `<div class="card-meta">${metaHtml} ${o.elapsed>=20?`<span style="color:var(--${o.elapsed>=30?'red':'orange'})">⏱ ${o.elapsed}m</span>`:'<span style="color:var(--text-muted)">⏱ '+o.elapsed+'m</span>'}</div>` : `<div class="card-meta"><span style="color:var(--text-muted)">⏱ ${o.elapsed}m</span></div>`}
-    <div class="items-list">${o.items.map(i=>renderItem(i)).join('')}</div>
+    <div style="padding:4px 12px 0 14px;display:flex;align-items:center;gap:6px">
+      <span class="order-prog ${progClass}" style="font-size:12px">完成 ${doneCount} / ${total}</span>
+      ${allDone && o.status==='making' ? '<span style="font-size:10px;color:var(--green);font-weight:700">▶ 可出餐</span>' : ''}
+    </div>
+    <div class="card-divider"></div>
     ${noteHtml}
-    <button class="card-action ${actionClass}" onclick="advanceOrder('${o.id}')" ${o.status==='served'?'disabled':''}>${actionText}</button>
-    <div class="card-footer">
-      <span class="card-footer-hint">長按 = 更多選項</span>
-      <button class="card-more-btn" onclick="showOrderCtx('${o.id}')">⋮ 更多</button>
+    <div class="items-list">${o.items.map(i=>renderItem(i)).join('')}</div>
+    <div class="card-actions">
+      <button class="card-action ${ctaClass}" onclick="advanceOrder('${o.id}')" ${o.status==='served'?'disabled':''}>${ctaText}</button>
+      ${o.status !== 'served' ? `<div class="card-sub-actions">
+        <button class="card-sub-btn danger" onclick="confirmCancelOrder('${o.id}')">🗑 取消訂單</button>
+        <button class="card-sub-btn" onclick="showOrderCtx('${o.id}')">⋮ 更多</button>
+      </div>` : ''}
     </div>
   </div>`;
+}
+
+function confirmCancelOrder(id) {
+  voiceState = 'confirming';
+  pendingConfirm = { fn: ()=>{ cancelOrder(id); }, label: `退訂單 #${id}` };
+  showConfirmBanner(`確認取消訂單 #${id}？`);
 }
 
 function renderItem(i) {
@@ -1491,13 +1533,92 @@ function processVoiceCommandExec(raw, mode) {
     if (si) { si.urge = true; renderSummary(); }
   }
 
-  // 找回 / 上一單
-  else if (/找回|上一單/.test(raw)) {
+  // 取消動作 / 回復（語音 Undo）
+  else if (/取消動作|回復|我做錯了|找回|上一單/.test(raw)) {
     matched = true;
-    if (state.completedOrders.length === 0) return voiceErr('沒有可找回的訂單');
-    const last = state.completedOrders[0];
-    restoreOrder(last.id);
-    speak(`訂單 ${last.id} 已找回`);
+    undoLastVoiceCmd();
+  }
+
+  // 退訂單{單號}
+  else if (/退訂單|退單/.test(raw) && orderNum) {
+    matched = true;
+    const o = state.orders.find(x => x.id === orderNum);
+    if (!o) return voiceErr(`找不到訂單 #${orderNum}，請確認單號`);
+    const prevOrders = [...state.orders];
+    lastVoiceAction = () => { state.orders = prevOrders; renderStandard(); toast(`↩️ 訂單 #${orderNum} 已還原`, 'ok'); };
+    cancelOrder(orderNum);
+    addVoiceHistory(`退訂單${orderNum}`, true);
+    speak(`訂單 ${orderNum} 已退單移除`);
+  }
+
+  // 查看 / 定位 {單號}
+  else if (/查看|定位|找/.test(raw) && orderNum) {
+    matched = true;
+    const el = document.getElementById(`card-${orderNum}`);
+    if (!el) {
+      const done = state.completedOrders.find(x=>x.id===orderNum);
+      if (done) { voiceErr(`訂單 #${orderNum} 已完成消單，可前往暫存區查看`); return; }
+      return voiceErr(`找不到訂單 #${orderNum}，請確認單號`);
+    }
+    el.scrollIntoView({ behavior:'smooth', block:'center' });
+    el.classList.add('highlighted');
+    setTimeout(()=>el.classList.remove('highlighted'), 4500);
+    toast(`🔍 定位訂單 #${orderNum}`, 'ok');
+    speak(`訂單 ${orderNum} 已標示`);
+    addVoiceHistory(`查看${orderNum}`, true);
+  }
+
+  // 還有多少訂單製作中
+  else if (/還有多少訂單|幾筆訂單|訂單數量/.test(raw)) {
+    matched = true;
+    const cnt = state.orders.filter(x=>x.status==='making').length;
+    toast(`📊 目前有 ${cnt} 筆訂單製作中`, 'ok');
+    speak(`目前有 ${cnt} 筆訂單製作中`);
+    addVoiceHistory(`還有${cnt}筆訂單`, true);
+  }
+
+  // 訂單#XX還有多少品項未完成
+  else if (/還有多少品項|品項未完成|幾項未完成/.test(raw) && orderNum) {
+    matched = true;
+    const o = state.orders.find(x=>x.id===orderNum);
+    if (!o) return voiceErr(`找不到訂單 #${orderNum}`);
+    const remain = o.items.filter(i=>i.status!=='done').length;
+    const names = o.items.filter(i=>i.status!=='done').map(i=>i.name).join('、');
+    toast(`📋 訂單 #${orderNum} 還有 ${remain} 項未完成：${names}`, 'ok');
+    speak(`訂單 ${orderNum} 還剩 ${remain} 項未完成，分別是 ${names}`);
+    addVoiceHistory(`訂單${orderNum}剩${remain}項`, true);
+  }
+
+  // 停止聆聽
+  else if (/停止聆聽|停止語音|結束語音/.test(raw)) {
+    matched = true;
+    stopListening(); voiceState='dormant'; setVoiceStateUI('dormant');
+    speak('已停止語音聆聽');
+    addVoiceHistory('停止聆聽', true);
+  }
+
+  // 刪除{單號}{品項}
+  else if (/刪除/.test(raw) && orderNum && itemName) {
+    matched = true;
+    const o = state.orders.find(x=>x.id===orderNum);
+    if (!o) return voiceErr(`找不到訂單 #${orderNum}`);
+    const item = o.items.find(i=>i.name.includes(itemName));
+    if (!item) return voiceErr(`訂單 #${orderNum} 沒有找到「${itemName}」，請確認品項`);
+    const prevItems = [...o.items];
+    lastVoiceAction = () => { o.items = prevItems; renderStandard(); };
+    o.items = o.items.filter(i=>i.id!==item.id);
+    renderStandard();
+    toast(`🗑️ 訂單 #${orderNum} 已刪除「${item.name}」`, 'warn');
+    speak(`訂單 ${orderNum} 已刪除 ${item.name}`);
+    addVoiceHistory(`刪除${orderNum}${item.name}`, true);
+  }
+
+  // 列印標籤{品項}
+  else if (/列印標籤|列印|印標籤/.test(raw)) {
+    matched = true;
+    toast(`🖨️ 列印標籤：${itemName||'指定品項'}`, 'ok');
+    speak(`列印 ${itemName||'標籤'}`);
+    addVoiceHistory(`列印${itemName||'標籤'}`, true);
   }
 
   // ── 品項流程（總表/標準）────────────────────────────
@@ -1600,8 +1721,8 @@ function processVoiceCommandExec(raw, mode) {
 }
 
 // ── 語音輔助工具函式 ────────────────────────────────
-function voiceOK(msg) { speak(msg); }
-function voiceErr(msg) { speak(msg); toast(`⚠️ ${msg}`, 'warn'); }
+function voiceOK(msg) { speak(msg); addVoiceHistory(msg.slice(0,14), true); }
+function voiceErr(msg) { speak(msg); toast(`⚠️ ${msg}`, 'warn'); addVoiceHistory(msg.slice(0,14), false); }
 
 function setVoiceStateUI(s) {
   document.querySelectorAll('.voice-panel').forEach(p => {
@@ -1625,18 +1746,36 @@ function showConfirmBanner(label) {
 }
 function hideConfirmBanner() { document.getElementById('confirmBanner').style.display='none'; }
 
+// ── 語音歷史記錄（最近3筆）────────────────────────────
+const voiceHistory = [];
+function addVoiceHistory(text, ok=true) {
+  voiceHistory.unshift({ text, ok });
+  if (voiceHistory.length > 3) voiceHistory.pop();
+  const el = document.getElementById('vbb-hist-list');
+  if (el) el.innerHTML = voiceHistory.map(h =>
+    `<span class="vbb-hist-item ${h.ok?'ok':'err'}">${h.ok?'✓':'✗'} ${h.text}</span>`
+  ).join('');
+}
+// 語音 Undo
+let lastVoiceAction = null;
+function undoLastVoiceCmd() {
+  if (!lastVoiceAction) { toast('沒有可回復的語音操作', ''); speak('沒有可回復的語音操作'); return; }
+  lastVoiceAction(); lastVoiceAction = null;
+  toast('↩️ 語音操作已回復', 'ok'); speak('已回復');
+}
+
 // ═══════════ VOICE TOGGLE ═══════════
 function toggleVoice() {
   state.voiceOn = document.getElementById('voiceToggle').checked;
   const wrap = document.getElementById('voiceWrap');
   const badge = document.getElementById('modeBadge');
-  const stdPanel = document.getElementById('std-voice-panel');
+  const stdBar = document.getElementById('std-voice-bar');
   const sumPanel = document.getElementById('sum-voice-panel');
   wrap.className = 'voice-wrap' + (state.voiceOn ? ' on' : '');
   badge.textContent = state.voiceOn ? '語音輔助 ON' : '無語音';
   badge.className = 'mode-badge' + (state.voiceOn ? ' voice-on' : '');
-  stdPanel.className = 'voice-panel' + (state.voiceOn ? ' show' : '');
-  sumPanel.className = 'voice-panel' + (state.voiceOn ? ' show' : '');
+  if (stdBar) stdBar.className = 'voice-bottom-bar' + (state.voiceOn ? ' show' : '');
+  if (sumPanel) sumPanel.className = 'voice-panel' + (state.voiceOn ? ' show' : '');
 
   if (!state.voiceOn) {
     stopListening(); voiceState = 'dormant'; setVoiceStateUI('dormant');
@@ -1647,10 +1786,9 @@ function toggleVoice() {
       voiceState = 'dormant'; setVoiceStateUI('dormant');
       toast('⚠️ 瀏覽器不支援語音辨識，請用 Chrome。模擬按鈕仍可使用', 'warn');
     } else {
-      // 開關打開 → 自動開始收音，不需額外點擊麥克風
       voiceState = 'ready'; setVoiceStateUI('ready');
       startListening();
-      toast('🎙️ 語音收音中，直接說指令！', 'voice');
+      toast('🎙️ 收音中，直接說指令！', 'voice');
     }
   }
 }
